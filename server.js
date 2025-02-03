@@ -5,8 +5,20 @@ const authRoutes = require('./routes/auth');
 const User = require('./models/User');
 const app = express();
 
-// parse application/x-www-form-urlencoded
-// app.use(express.urlencoded({ extended: true }));
+// 헤더 설정 미들웨어
+app.use((req, res, next) => {
+  // res.setHeader('Access-Control-Allow-Origin', '*'); // 모든 도메인 허용 (보안 필요시 도메인 제한 가능)
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PUT, DELETE, OPTIONS'
+  );
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Credentials', 'true'); // 클라이언트와 서버 간에 쿠키 주고받기 허용
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -30,11 +42,6 @@ connection.connect((err) => {
   }
   console.log('Connected to MySQL successfully!');
 });
-
-// connection.query('SELECT * from user', (error, rows, fields) => {
-//   if (error) throw error;
-//   console.log('User info is: ', rows);
-// });
 
 connection.end();
 

@@ -1,7 +1,8 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const password = process.env.DB_PASSWORD;
 const database = process.env.DB_DATABASE;
-const sequelize = new Sequelize(database, 'root', password, {
+const user = process.env.DB_USER;
+const sequelize = new Sequelize(database, user, password, {
   host: process.env.DB_HOST || 'localhost',
   dialect: 'mysql',
 });
@@ -23,6 +24,9 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
+    validate: {
+      isEmail: true, // 이메일 형식 유효성 검사
+    },
   },
   password: {
     type: DataTypes.STRING,

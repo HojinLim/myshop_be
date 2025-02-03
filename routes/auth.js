@@ -15,8 +15,21 @@ router.post('/register', async (req, res) => {
     // 입력값 확인
     if (!username || !email || !password) {
       return res.status(400).json({
-        message: `모든 필드를 입력하세요.${username}${email}${password}`,
+        message: `모든 필드를 입력하세요.`,
       });
+      ㅣ;
+    }
+    // 이메일 중복 확인
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: '이미 존재하는 이메일입니다.' });
+    }
+
+    // 패스워드 길이 검사
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ message: '비밀번호는 최소 6자 이상이어야 합니다.' });
     }
 
     // 비밀번호 해싱
@@ -39,31 +52,31 @@ router.post('/register', async (req, res) => {
 // 로그인 API
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
     // 입력값 확인
-    if (!username || !password) {
+    if (!email || !password) {
       return res.status(400).json({ message: '모든 필드를 입력하세요.' });
     }
 
     // 유저 찾기
-    const user = await User.findOne({ where: { username } });
+    const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
     }
 
     // 비밀번호 검증
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log(isPasswordValid);
+
     if (!isPasswordValid) {
       return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
     }
 
     // JWT 토큰 생성
-    const token = jwt.sign(
-      { id: user.id, username: user.username },
-      SECRET_KEY,
-      { expiresIn: '1h' }
-    );
+    const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, {
+      expiresIn: '1h',
+    });
 
     res.status(200).json({ message: '로그인 성공', token });
   } catch (error) {
