@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const authenticateToken = require('../middlewares/authenticateToken');
 
 const router = express.Router();
 
@@ -78,10 +79,29 @@ router.post('/login', async (req, res) => {
       expiresIn: '1h',
     });
 
-    res.status(200).json({ message: '로그인 성공', token });
+    res.status(200).json({
+      message: '로그인 성공',
+      token,
+      user: { id: user.id, username: user.username, email: user.email },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: '로그인 실패' });
+  }
+});
+
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findOne({ where: { id: req.user.id } });
+
+    if (!user) {
+      return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+    }
+
+    res.json({ id: user.id, username: user.username, email: user.email });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: '서버 오류 발생' });
   }
 });
 
