@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
 const User = require('./models/User');
 const app = express();
 
@@ -27,6 +28,7 @@ app.use(express.json());
 
 // 미들웨어 설정
 app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 
