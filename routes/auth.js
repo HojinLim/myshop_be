@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authenticateToken = require('../middlewares/authenticateToken');
+const upload = require('../config/cloudinary');
 
 const router = express.Router();
 
@@ -109,9 +110,40 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: '로그인 실패' });
+    res.status(500).json({ message: '로그인 실패', error });
   }
 });
+
+// 프로필 이미지 업로드
+router.post(
+  '/upload_profile',
+  authenticateToken,
+  upload.single('profileImage'),
+  async (req, res) => {
+    try {
+      console.log('🟢 업로드된 파일 정보:', req.file); // 🔍 디버깅 코드 추가
+
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, error: 'No file uploaded' });
+      }
+
+      const imageUrl = req.file.path; // 🔥 `secure_url` 대신 `path` 사용
+
+      // DB 업데이트
+      await User.update(
+        { profileUrl: imageUrl },
+        { where: { id: req.user.id } }
+      );
+
+      res.json({ success: true, imageUrl });
+    } catch (error) {
+      console.error('🔴 업로드 에러:', error);
+      res.status(500).json({ success: false, error: 'Upload failed' });
+    }
+  }
+);
 
 router.get('/me', authenticateToken, async (req, res) => {
   try {

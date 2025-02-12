@@ -37,6 +37,10 @@ const User = sequelize.define('User', {
     allowNull: false,
     values: ['user', 'admin'],
   },
+  profileUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 });
 
 module.exports = User;
