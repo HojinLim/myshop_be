@@ -20,4 +20,11 @@ router.get('/getAllUsers', async (req, res) => {
   }
 });
 
+router.post('/upload_product', async (req, res) => {
+  try {
+
+    
+  } catch (error) {}
+});
+
 module.exports = router;
