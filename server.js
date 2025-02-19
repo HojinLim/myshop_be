@@ -8,8 +8,9 @@ const app = express();
 
 // 헤더 설정 미들웨어
 app.use((req, res, next) => {
+  const deployURL = process.env.DEPLOY_URL;
   // res.setHeader('Access-Control-Allow-Origin', '*'); // 모든 도메인 허용 (보안 필요시 도메인 제한 가능)
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.setHeader('Access-Control-Allow-Origin', deployURL);
   res.setHeader(
     'Access-Control-Allow-Methods',
     'GET, POST, PUT, DELETE, OPTIONS'
@@ -27,8 +28,8 @@ app.use(bodyParser.json());
 app.use(express.json());
 
 // 미들웨어 설정
-app.use('/auth', authRoutes);
-app.use('/admin', adminRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 
@@ -56,8 +57,6 @@ connection.end();
     console.error('데이터베이스 연결 실패:', error);
   }
 })();
-
-app.get('/login', (req, res) => {});
 
 app.listen(PORT, function () {
   console.log(`Server is running... on port${PORT}`);
