@@ -6,11 +6,19 @@ const adminRoutes = require('./routes/admin');
 const User = require('./models/User');
 const app = express();
 
+const allowedOrigins = ['http://localhost:3000/'];
+
 // 헤더 설정 미들웨어
 app.use((req, res, next) => {
   const deployURL = process.env.DEPLOY_URL;
+
   // res.setHeader('Access-Control-Allow-Origin', '*'); // 모든 도메인 허용 (보안 필요시 도메인 제한 가능)
-  res.setHeader('Access-Control-Allow-Origin', deployURL);
+
+  allowedOrigins.push(deployURL);
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader(
     'Access-Control-Allow-Methods',
     'GET, POST, PUT, DELETE, OPTIONS'
