@@ -6,7 +6,7 @@ const adminRoutes = require('./routes/admin');
 const User = require('./models/User');
 const app = express();
 
-const allowedOrigins = ['http://localhost:3000/'];
+const allowedOrigins = ['http://localhost:3000'];
 
 // 헤더 설정 미들웨어
 app.use((req, res, next) => {
