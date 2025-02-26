@@ -1,6 +1,5 @@
 require('dotenv').config();
 const { S3Client } = require('@aws-sdk/client-s3');
-// const AWS = require('aws-sdk');
 
 // 🔹 AWS S3 설정
 const s3 = new S3Client({

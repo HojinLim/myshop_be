@@ -199,7 +199,6 @@ router.post('/get_profile', async (req, res) => {
     const { profileUrl } = req.body;
 
     const fileName = profileUrl;
-    console.log('gogo');
 
     // 예시로 임시 URL을 반환
     const imageUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${fileName}`;

@@ -3,6 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const categoryRoutes = require('./routes/category');
 const User = require('./models/User');
 const app = express();
 
@@ -38,6 +39,7 @@ app.use(express.json());
 // 미들웨어 설정
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/category', categoryRoutes);
 
 const PORT = process.env.PORT || 5000;
 
