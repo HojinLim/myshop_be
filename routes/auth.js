@@ -15,6 +15,30 @@ const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 // 비밀 키 설정
 const SECRET_KEY = process.env.SECRET_KEY;
 
+// Multer + S3 설정
+const upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: process.env.S3_BUCKET_NAME,
+    metadata: (req, file, cb) => {
+      cb(null, { fieldName: file.fieldname });
+    },
+    key: (req, file, cb) => {
+      console.log('req.body:', req.body.userId); // form data 확인
+      console.log('req.file:', req.body.file); // 업로드된 파일 정보 확인
+
+      const userId = req.query.userId;
+      const timestamp = Date.now();
+      const originalName = file.originalname.replace(/\s+/g, '_');
+      // const filePath = `profile/${userId}/${timestamp}_${originalName}`;
+      const splited = originalName.split('.');
+      const type = splited[splited.length - 1];
+      const filePath = `profile/${userId}.${type}`;
+      cb(null, filePath); // S3에 저장할 경로
+    },
+  }),
+});
+
 // 회원가입 API
 router.post('/register', async (req, res) => {
   try {
@@ -24,7 +48,6 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({
         message: `모든 필드를 입력하세요.`,
       });
-      ㅣ;
     }
     // 이메일 중복 확인
     const existingUser = await User.findOne({ where: { email } });
@@ -143,27 +166,6 @@ router.get('/me', authenticateToken, async (req, res) => {
     console.error(error);
     res.status(500).json({ message: '서버 오류 발생' });
   }
-});
-
-// Multer + S3 설정
-const upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: process.env.S3_BUCKET_NAME,
-    metadata: (req, file, cb) => {
-      cb(null, { fieldName: file.fieldname });
-    },
-    key: (req, file, cb) => {
-      const userId = req.query.userId;
-      const timestamp = Date.now();
-      const originalName = file.originalname.replace(/\s+/g, '_');
-      // const filePath = `profile/${userId}/${timestamp}_${originalName}`;
-      const splited = originalName.split('.');
-      const type = splited[splited.length - 1];
-      const filePath = `profile/${userId}.${type}`;
-      cb(null, filePath); // S3에 저장할 경로
-    },
-  }),
 });
 
 // 프로필 업로드
