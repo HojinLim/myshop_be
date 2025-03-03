@@ -7,6 +7,8 @@ const s3 = require('../config/s3');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 
+const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+
 // 카테고리 리스트 가져오기
 router.get('/categories', async (req, res) => {
   try {
@@ -32,26 +34,6 @@ const upload = multer({
       cb(null, { fieldName: file.fieldname });
     },
     key: (req, file, cb) => {
-      console.log('📌 [Body] 요청 데이터:', req.body);
-      console.log('📌 [Multer] 파일 목록:', req.files);
-      console.log('📌 [Category IDs]:', req.body.categoryIds);
-
-      const categoryIds = JSON.parse(req.body.categoryIds || '[]'); // ✅ JSON 변환
-      // req.files가 객체 형태일 경우, 배열로 변환
-      const filesArray = Array.isArray(req.files)
-        ? req.files
-        : Object.values(req.files);
-
-      console.log('📌 [Multer] 배열로 변환된 파일 목록:', filesArray);
-
-      // 파일 인덱스 찾기
-      const index = filesArray.findIndex(
-        (f) => f.originalname === file.originalname
-      );
-      console.log('📌 [Multer] 파일 인덱스:', index);
-
-      const categoryId = categoryIds[index] || 'unknown'; // 파일에 대응하는 카테고리 ID (없으면 unknown)
-
       const originalName = file.originalname.replace(/\s+/g, '_');
       const splited = originalName.split('.');
       const type = splited[splited.length - 1];
@@ -72,8 +54,6 @@ router.post(
       let categories = JSON.parse(req.body.categories || '[]'); // JSON 변환
       let uploadedFiles = req.files || [];
       let categoryIds = JSON.parse(req.body.categoryIds || '[]'); // ✅ JSON 변환
-      console.log('categoryIds!!!', categoryIds);
-      console.log('categories!!!', categories);
 
       if (categories.length > 0) {
         for (let i = 0; i < categories.length; i++) {
@@ -90,22 +70,55 @@ router.post(
           category.name = categories[i].name;
 
           await category.save();
+
+          // null이 들어올시 이미지 및 이미지 url 삭제
+          if (categories[i].upload_photo === null) {
+            console.log(categories[i]);
+
+            // S3에서 카테고리리
+            const imageUrl = category.imageUrl; // DB에 저장된 파일 경로
+
+            const deleteParams = {
+              Bucket: process.env.S3_BUCKET_NAME,
+              Key: imageUrl,
+              CacheControl: 'max-age=86400', // 1일 동안 캐시
+            };
+
+            try {
+              const command = new DeleteObjectCommand(deleteParams);
+              await s3.send(command); // S3 이미지 삭제
+              console.log('✅ S3에서 이미지 삭제 성공');
+            } catch (s3Error) {
+              console.error('❌ S3 이미지 삭제 실패:', s3Error);
+              return res
+                .status(500)
+                .json({ error: 'S3 이미지 삭제에 실패했습니다.' });
+            }
+
+            // S3 삭제 성공 후 DB 업데이트
+            try {
+              category.imageUrl = null;
+              await category.save();
+              console.log('✅ DB 프로필 URL 업데이트 성공');
+            } catch (dbError) {
+              console.error('❌ DB 업데이트 실패:', dbError);
+              return res
+                .status(500)
+                .json({ error: 'DB 업데이트에 실패했습니다.' });
+            }
+          }
         }
       }
-
-      let savedCategories = [];
 
       for (let i = 0; i < uploadedFiles.length; i++) {
         let imageUrl = uploadedFiles[i].key; // S3 이미지 URL 저장
         let categoryId = categoryIds[i]; // ⬅️ 해당 이미지의 카테고리 ID 매칭
-        console.log('i', categoryId);
 
-        // DB 업데이트 (카테고리 ID로 찾고 이미지 URL 추가)
+        // DB 업데이트 (카테고리 ID로 찾고 이미지 URL 추가 및 삭제)
         let category = await Category.findByPk(categoryId);
         if (category) {
           category.imageUrl = imageUrl;
           await category.save();
-          savedCategories.push(category);
         }
       }
 
