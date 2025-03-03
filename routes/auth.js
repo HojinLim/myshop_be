@@ -241,7 +241,7 @@ router.post('/delete_profile', async (req, res) => {
     const deleteParams = {
       Bucket: process.env.S3_BUCKET_NAME,
       Key: fileKey,
-      CacheControl: 'max-age=86400', // 1일 동안 캐시
+      // CacheControl: 'max-age=86400', // 1일 동안 캐시
     };
 
     try {

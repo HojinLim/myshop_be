@@ -4,10 +4,8 @@ const router = express.Router();
 
 const s3 = require('../config/s3');
 
-const multer = require('multer');
-const multerS3 = require('multer-s3');
-
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const createS3Uploader = require('../config/createS3Uploader');
 
 // 카테고리 리스트 가져오기
 router.get('/categories', async (req, res) => {
@@ -25,30 +23,10 @@ router.get('/categories', async (req, res) => {
   }
 });
 
-// Multer + S3 설정
-const upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: process.env.S3_BUCKET_NAME,
-    metadata: (req, file, cb) => {
-      cb(null, { fieldName: file.fieldname });
-    },
-    key: (req, file, cb) => {
-      const originalName = file.originalname.replace(/\s+/g, '_');
-      const splited = originalName.split('.');
-      const type = splited[splited.length - 1];
-      const timestamp = Date.now();
-      const filePath = `category/${timestamp}_${file.fieldname}.${type}`;
-      cb(null, filePath); // S3에 저장할 경로
-    },
-  }),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB 제한
-});
-
 // 카테고리 업데이트
 router.post(
   '/update_categories',
-  upload.array('categoryImages', 10),
+  createS3Uploader('category').array('categoryImages', 10),
   async (req, res) => {
     try {
       let categories = JSON.parse(req.body.categories || '[]'); // JSON 변환
