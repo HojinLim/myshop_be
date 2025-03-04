@@ -10,10 +10,20 @@ const createS3Uploader = require('../config/createS3Uploader');
 // 카테고리 리스트 가져오기
 router.get('/products', async (req, res) => {
   try {
-    const products = await Product.findAll({});
+    const { category, id } = req.query; // 쿼리스트링에서 category 가져오기
+
+    let whereCondition = category ? { category } : {}; // category 값이 있으면 필터링
+
+    if (Object.keys(whereCondition) <= 0) {
+      whereCondition = id ? { id } : {}; // category 값이 있으면 필터링
+    }
+
+    const products = await Product.findAll({
+      where: whereCondition,
+    });
     return res.status(200).json({
       message: '상품 가져오기 성공',
-      categories: categories,
+      products: products,
     });
   } catch (error) {
     return res.status(400).json({
@@ -34,6 +44,10 @@ router.post(
 
       let productList = [];
 
+      console.log(uploadedFiles);
+
+      console.log('req_product', req_product);
+
       // 상품 경로 저장
       for (let i = 0; i < uploadedFiles.length; i++) {
         let imageUrl = uploadedFiles[i].key; // S3 이미지 URL 저장
@@ -41,7 +55,7 @@ router.post(
         // 상품 업로드
         const product = await Product.create({
           ...req_product,
-          imageUrl: imageUrl,
+          imageUrl,
         });
         productList.push(product);
       }

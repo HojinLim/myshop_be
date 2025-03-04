@@ -15,22 +15,28 @@ const Product = sequelize.define(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+    },
+    category: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     imageUrl: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     originPrice: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     discountPrice: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
     },
   },
   {

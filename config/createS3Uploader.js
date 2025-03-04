@@ -11,8 +11,6 @@ const createS3Uploader = (path) => {
         cb(null, { fieldName: file.fieldname });
       },
       key: (req, file, cb) => {
-        console.log(req, file, cb);
-
         const originalName = file.originalname.replace(/\s+/g, '_');
 
         // jpg, png 형식 정하기
