@@ -6,8 +6,9 @@ const s3 = require('../config/s3');
 
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const createS3Uploader = require('../config/createS3Uploader');
+const product_options = require('../models/Product_options');
 
-// 카테고리 리스트 가져오기
+// 상품 리스트 가져오기
 router.get('/products', async (req, res) => {
   try {
     const { category, id } = req.query; // 쿼리스트링에서 category 가져오기
@@ -33,7 +34,7 @@ router.get('/products', async (req, res) => {
   }
 });
 
-// 카테고리 업데이트
+// 상품 업데이트
 router.post(
   '/upload_product',
   createS3Uploader('products').array('productImages', 10),
@@ -66,5 +67,45 @@ router.post(
     }
   }
 );
+
+// 상품 옵션 추가하기
+router.post('/create_options', async (req, res) => {
+  try {
+    const { product_id, size, color, stock, price } = req.body;
+
+    // console.log(req.body);
+
+    // 입력값 확인
+    if (!size || !color || !stock) {
+      return res.status(400).json({ message: '모든 필드를 입력하세요.' });
+    }
+
+    // 중복된 옵션인지 검증
+    const exist_option = await product_options.findOne({
+      where: {
+        product_id,
+        size,
+        color,
+      },
+    });
+
+    if (exist_option) {
+      return res.status(400).json({ message: '이미 존재하는 옵션입니다.' });
+    }
+    const product_option = await product_options.create({
+      ...req.body,
+    });
+
+    return res.status(200).json({
+      message: '옵션 생성 성공',
+      product_option: {
+        ...product_option,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: '옵션 생성 실패', error });
+  }
+});
 
 module.exports = router;
