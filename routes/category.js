@@ -22,6 +22,7 @@ router.get('/categories', async (req, res) => {
     });
   }
 });
+//
 
 // 카테고리 업데이트
 router.post(
