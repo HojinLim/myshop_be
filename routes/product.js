@@ -73,8 +73,6 @@ router.post('/create_options', async (req, res) => {
   try {
     const { product_id, size, color, stock, price } = req.body;
 
-    // console.log(req.body);
-
     // 입력값 확인
     if (!size || !color || !stock) {
       return res.status(400).json({ message: '모든 필드를 입력하세요.' });
@@ -83,14 +81,16 @@ router.post('/create_options', async (req, res) => {
     // 중복된 옵션인지 검증
     const exist_option = await product_options.findOne({
       where: {
-        product_id,
+        product_id: Number(product_id),
         size,
         color,
       },
     });
 
-    if (exist_option) {
-      return res.status(400).json({ message: '이미 존재하는 옵션입니다.' });
+    if (exist_option !== null) {
+      return res
+        .status(400)
+        .json({ message: '이미 존재하는 옵션입니다.', exist_option });
     }
     const product_option = await product_options.create({
       ...req.body,
