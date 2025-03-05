@@ -6,7 +6,7 @@ const s3 = require('../config/s3');
 
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const createS3Uploader = require('../config/createS3Uploader');
-const product_options = require('../models/Product_options');
+const product_options = require('../models/product_options');
 
 // 상품 리스트 가져오기
 router.get('/products', async (req, res) => {
