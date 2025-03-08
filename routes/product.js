@@ -107,5 +107,38 @@ router.post('/create_options', async (req, res) => {
     return res.status(500).json({ message: '옵션 생성 실패', error });
   }
 });
+// 상품 옵션 조회
+router.get('/search_options', async (req, res) => {
+  try {
+    const { product_id } = req.query;
+    console.log('product_id', product_id);
+
+    // 입력값 확인
+    if (!product_id) {
+      return res.status(400).json({ message: '모든 필드를 입력하세요.' });
+    }
+
+    // 해당 제품 id의 옵션들 모두 조회
+    const options = await product_options.findAll({
+      where: {
+        product_id: Number(product_id),
+      },
+    });
+
+    if (options === null) {
+      return res
+        .status(400)
+        .json({ message: '해당 아이디의 옵션이 존재하지 않습니다.' });
+    }
+
+    return res.status(200).json({
+      message: '옵션 조회 성공',
+      product_option: options,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: '옵션 조회 실패', error });
+  }
+});
 
 module.exports = router;

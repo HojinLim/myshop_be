@@ -34,7 +34,7 @@ const product_options = sequelize.define(
       allowNull: false,
     },
     stock: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: 0,
     },
