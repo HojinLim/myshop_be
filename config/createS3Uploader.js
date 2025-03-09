@@ -12,6 +12,7 @@ const createS3Uploader = (path) => {
       },
       key: (req, file, cb) => {
         const originalName = file.originalname.replace(/\s+/g, '_');
+        console.log('req.body', req.body);
 
         // jpg, png 형식 정하기
         const splited = originalName.split('.');
