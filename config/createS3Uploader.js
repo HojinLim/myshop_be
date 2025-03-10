@@ -2,7 +2,7 @@ const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = require('./s3');
 // Multer + S3 설정
-const createS3Uploader = (path) => {
+const createS3Uploader = () => {
   return multer({
     storage: multerS3({
       s3: s3,
@@ -11,8 +11,9 @@ const createS3Uploader = (path) => {
         cb(null, { fieldName: file.fieldname });
       },
       key: (req, file, cb) => {
+        console.log(req, file);
+
         const originalName = file.originalname.replace(/\s+/g, '_');
-        console.log('req.body', req.body);
 
         // jpg, png 형식 정하기
         const splited = originalName.split('.');
