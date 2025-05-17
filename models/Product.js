@@ -1,5 +1,4 @@
 const { DataTypes } = require('sequelize');
-
 const sequelize = require('../config/sequelize');
 
 const Product = sequelize.define(
@@ -9,7 +8,6 @@ const Product = sequelize.define(
       primaryKey: true,
       type: DataTypes.INTEGER,
       allowNull: false,
-      unique: true,
       autoIncrement: true,
     },
     name: {
@@ -17,10 +15,6 @@ const Product = sequelize.define(
       allowNull: false,
     },
     category: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    imageUrl: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -40,7 +34,7 @@ const Product = sequelize.define(
     },
   },
   {
-    freezeTableName: true, // 테이블 이름을 모델명 그대로 사용
+    freezeTableName: true,
   }
 );
 

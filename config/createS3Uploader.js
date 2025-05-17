@@ -1,8 +1,9 @@
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = require('./s3');
-// Multer + S3 설정
-const createS3Uploader = () => {
+
+// ✅ Multer + S3 설정 (폴더 구분)
+const createS3Uploader = (folder) => {
   return multer({
     storage: multerS3({
       s3: s3,
@@ -11,17 +12,13 @@ const createS3Uploader = () => {
         cb(null, { fieldName: file.fieldname });
       },
       key: (req, file, cb) => {
-        console.log(req, file);
-
+        const folder =
+          file.fieldname === 'mainImages' ? 'mainImages' : 'detailImages'; // ✅ 필드네임 기반 폴더 설정
         const originalName = file.originalname.replace(/\s+/g, '_');
-
-        // jpg, png 형식 정하기
-        const splited = originalName.split('.');
-        const type = splited[splited.length - 1];
-
-        // 고유한 시간값
+        const type = originalName.split('.').pop();
         const timestamp = Date.now();
-        const filePath = `${path}/${timestamp}_${file.fieldname}.${type}`;
+        const filePath = `${folder}/${timestamp}_${file.fieldname}.${type}`;
+
         cb(null, filePath); // S3에 저장할 경로
       },
     }),

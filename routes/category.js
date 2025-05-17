@@ -52,8 +52,6 @@ router.post(
 
           // null이 들어올시 이미지 및 이미지 url 삭제
           if (categories[i].upload_photo === null) {
-            console.log(categories[i]);
-
             // S3에서 카테고리리
             const imageUrl = category.imageUrl; // DB에 저장된 파일 경로
 
