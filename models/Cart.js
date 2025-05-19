@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 
 const sequelize = require('../config/sequelize');
+const User = require('./User');
 
 const Cart = sequelize.define(
   'Cart',
