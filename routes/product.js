@@ -93,30 +93,7 @@ router.post(
   '/upload_photos',
   createS3Uploader().array('productImages', 10),
   async (req, res) => {
-    // console.log(req);
-
     try {
-      // let req_product = JSON.parse(req.body.product || '[]'); // JSON 변환
-      // let uploadedFiles = req.files || [];
-
-      // let productList = [];
-
-      // console.log(uploadedFiles);
-
-      // console.log('req_product', req_product);
-
-      // // 상품 경로 저장
-      // for (let i = 0; i < uploadedFiles.length; i++) {
-      //   let imageUrl = uploadedFiles[i].key; // S3 이미지 URL 저장
-
-      //   // 상품 업로드
-      //   const product = await Product.create({
-      //     ...req_product,
-      //     imageUrl,
-      //   });
-      //   productList.push(product);
-      // }
-
       return res.status(201).json({ message: '업로드 성공', productList });
     } catch (error) {
       return res.status(400).json({ message: '업로드 에러', error });

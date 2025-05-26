@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/sequelize');
+const product_options = require('./product_options'); // ✅ Product 모델 가져오기
 
 const Product = sequelize.define(
   'Product',
