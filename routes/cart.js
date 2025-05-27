@@ -4,6 +4,11 @@ const Product = require('../models/Product');
 const ProductImage = require('../models/ProductImage');
 const product_options = require('../models/product_options');
 const { Op } = require('sequelize');
+const {
+  getCartItems,
+  destroyAllCartByUID,
+  updateCartOwner,
+} = require('../utils');
 const router = express.Router();
 
 // 카트 리스트 가져오기
@@ -11,29 +16,7 @@ router.get('/', async (req, res) => {
   try {
     const { user_id } = req.query;
 
-    const cartItems = await Cart.findAll({
-      where: { user_id },
-      include: [
-        {
-          model: product_options,
-          attributes: ['id', 'size', 'color', 'price'],
-          include: {
-            model: Product,
-            attributes: ['id', 'name', 'originPrice'],
-            include: [
-              {
-                model: product_options, // ✅ 현재 옵션의 상품과 관련된 모든 옵션 조회
-                attributes: ['id', 'size', 'color', 'price', 'stock'],
-              },
-              {
-                model: ProductImage, // ✅ 상품 이미지 조회 추가
-                attributes: ['imageUrl'],
-              },
-            ],
-          },
-        },
-      ],
-    });
+    const cartItems = await getCartItems(user_id);
 
     return res.status(200).json({
       message: '카트 가져오기 성공',
@@ -53,41 +36,89 @@ router.post('/add', async (req, res) => {
     const { user_id, product_option_id, quantity } = req.body;
 
     // 입력값 확인
-    if (!quantity) {
+    if (!quantity || !product_option_id) {
       return res.status(400).json({ message: '모든 필드를 입력하세요.' });
     }
 
-    // 로그인 유효 검사
-    if (!user_id) {
-      return res.status(400).json({ message: '로그인이 필요합니다.' });
-    }
     // 존재하는 옵션인지 검증
     const exist_option = await product_options.findOne({
       where: {
         id: Number(product_option_id),
       },
     });
-    // TODO: 이미 카트에 존재하는 옵션일 시 update 수량만 올리게끔
 
     if (!exist_option) {
       return res
         .status(400)
         .json({ message: '존재하지 않는 옵션입니다.', exist_option });
     }
-
-    const cart = await Cart.create({
-      ...req.body,
-    });
-
-    return res.status(200).json({
-      message: '카트 생성 성공',
-      cart: {
-        ...cart,
+    const exist_cart = await Cart.findOne({
+      where: {
+        user_id,
+        product_option_id,
       },
     });
+    // 이미 카트에 들어있음
+    if (exist_cart) {
+      // ✅ 카트 업데이트 진행
+      const cart = await Cart.update(
+        { quantity: exist_cart.quantity + quantity },
+        { where: { user_id, product_option_id: product_option_id } }
+      );
+      return res.status(200).json({
+        message: '카트 추가 성공',
+        cart: {
+          ...cart,
+        },
+      });
+    }
+    // 해당 옵션은 카트에 없음
+    else {
+      const cart = await Cart.create({
+        ...req.body,
+      });
+
+      return res.status(200).json({
+        message: '카트 생성 성공',
+        cart: {
+          ...cart,
+        },
+      });
+    }
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: '카트 생성 실패', error });
+  }
+});
+// 장바구니 옮기기
+router.post('/transfer', async (req, res) => {
+  try {
+    const { user_id, non_user_id } = req.body;
+
+    if (!user_id || !non_user_id) {
+      return res.status(400).json({ message: '필요한 정보가 부족합니다.' });
+    }
+
+    // ✅ 비회원 장바구니 조회
+    const nonMemberCart = await getCartItems(non_user_id);
+
+    if (nonMemberCart.length <= 0) {
+      return res
+        .status(200)
+        .json({ message: '비회원 장바구니가 비어 있습니다.' });
+    } else {
+      // // ✅ 비회원 장바구니를 회원 장바구니로 이전
+      await updateCartOwner(non_user_id, user_id);
+      // // ✅ 이전 완료 후 기존 비회원 장바구니 삭제
+      await destroyAllCartByUID(non_user_id);
+    }
+
+    return res.status(200).json({
+      message: '비회원 장바구니를 회원 장바구니로 성공적으로 이동했습니다.',
+    });
+  } catch (error) {
+    console.error('🚨 오류 발생:', error);
+    return res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });
 
