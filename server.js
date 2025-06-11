@@ -6,6 +6,10 @@ const adminRoutes = require('./routes/admin');
 const cartRoutes = require('./routes/cart');
 const productRoutes = require('./routes/product');
 const categoryRoutes = require('./routes/category');
+const paymentRoutes = require('./routes/payments');
+const pointsRoutes = require('./routes/points');
+const orderRoutes = require('./routes/order');
+const favoriteRoutes = require('./routes/favorite');
 const User = require('./models/User');
 const app = express();
 
@@ -44,6 +48,10 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/product', productRoutes);
 app.use('/api/category', categoryRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/points', pointsRoutes);
+app.use('/api/order', orderRoutes);
+app.use('/api/favorite', favoriteRoutes);
 
 const PORT = process.env.PORT || 5000;
 

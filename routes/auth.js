@@ -136,6 +136,7 @@ router.post('/login', async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        points: user.points,
       },
     });
   } catch (error) {
@@ -159,6 +160,7 @@ router.get('/me', authenticateToken, async (req, res) => {
         email: user.email,
         role: user.role,
         profileUrl: user.profileUrl,
+        points: user.points,
       },
       message: '유저 조회 성공',
     });

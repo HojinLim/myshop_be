@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/sequelize');
-const Product = require('./Product'); // ✅ Product 모델 가져오기
+const Product = require('../models');
 
 const ProductImage = sequelize.define(
   'ProductImage',
@@ -39,12 +39,5 @@ const ProductImage = sequelize.define(
     freezeTableName: true,
   }
 );
-
-// ✅ 관계 설정
-Product.hasMany(ProductImage, {
-  foreignKey: 'product_id',
-  onDelete: 'CASCADE',
-});
-ProductImage.belongsTo(Product, { foreignKey: 'product_id' });
 
 module.exports = ProductImage;

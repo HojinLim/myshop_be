@@ -1,10 +1,9 @@
 const { DataTypes } = require('sequelize');
 
 const sequelize = require('../config/sequelize');
-const Product = require('../models');
 
-const product_options = sequelize.define(
-  'product_options',
+const order = sequelize.define(
+  'order',
   {
     id: {
       primaryKey: true,
@@ -13,30 +12,38 @@ const product_options = sequelize.define(
       unique: true,
       autoIncrement: true,
     },
-    product_id: {
+    user_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: Product,
+        model: 'User',
         key: 'id',
       },
     },
-    size: {
+    totalPrice: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    payment_method: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    color: {
-      type: DataTypes.STRING,
+    status: {
+      type: DataTypes.ENUM('pending', 'paid', 'refunded', 'partial_refunded'),
+      allowNull: false,
+      defaultValue: 'pending',
+    },
+    amount_paid_by_pg: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
-    price: {
+    amount_paid_by_point: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
     },
-    stock: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: 0,
+    imp_uid: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -46,8 +53,8 @@ const product_options = sequelize.define(
     },
   },
   {
-    freezeTableName: true, // 테이블 이름을 모델명 그대로 사용
+    freezeTableName: true, // 테이블 이름을 모델명 그대로 사용a
   }
 );
 
-module.exports = product_options;
+module.exports = order;

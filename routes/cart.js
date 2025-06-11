@@ -1,8 +1,6 @@
 const express = require('express');
-const Cart = require('../models/Cart');
-const Product = require('../models/Product');
-const ProductImage = require('../models/ProductImage');
-const product_options = require('../models/product_options');
+const { Cart, Product, ProductImage, product_options } = require('../models');
+
 const { Op } = require('sequelize');
 const {
   getCartItems,
@@ -23,6 +21,8 @@ router.get('/', async (req, res) => {
       cartItems,
     });
   } catch (error) {
+    console.log(error);
+
     return res.status(400).json({
       message: '카트 가져오기 실패',
       error,

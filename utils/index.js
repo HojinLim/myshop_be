@@ -1,3 +1,4 @@
+const axios = require('axios');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const product_options = require('../models/product_options');
@@ -78,4 +79,18 @@ const destroyAllCartByUID = async (user_id) => {
   return result;
 };
 
-module.exports = { getCartItems, updateCartOwner, destroyAllCartByUID };
+// 아임포트 엑세스 토큰 발급
+async function getToken() {
+  const response = await axios.post('https://api.iamport.kr/users/getToken', {
+    imp_key: process.env.IAMPORT_API_KEY,
+    imp_secret: process.env.IAMPORT_API_SECRET,
+  });
+  return response.data.response.access_token;
+}
+
+module.exports = {
+  getCartItems,
+  updateCartOwner,
+  destroyAllCartByUID,
+  getToken,
+};

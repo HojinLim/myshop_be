@@ -1,13 +1,11 @@
 const express = require('express');
-const Product = require('../models/Product');
-const ProductImage = require('../models/ProductImage');
+const { Product, ProductImage, product_options } = require('../models');
 const router = express.Router();
 
 const s3 = require('../config/s3');
 
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const createS3Uploader = require('../config/createS3Uploader');
-const product_options = require('../models/product_options');
 
 // 상품 리스트 가져오기
 router.get('/products', async (req, res) => {
@@ -193,6 +191,18 @@ router.get('/product_options', async (req, res) => {
       where: {
         product_id: Number(product_id),
       },
+      include: [
+        {
+          model: Product, // ✅ Product 모델 포함
+          attributes: ['id', 'name', 'originPrice'],
+          include: [
+            {
+              model: ProductImage, // ✅ ProductImage 모델 포함
+              attributes: ['imageUrl'],
+            },
+          ],
+        },
+      ],
     });
 
     if (options === null) {
