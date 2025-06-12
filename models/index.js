@@ -10,6 +10,7 @@ const Cart = require('./Cart');
 const User = require('./User');
 const point_history = require('./point_history');
 const favorite = require('./favorite');
+const review = require('./review');
 
 // 관계 설정
 order.hasMany(order_item, { foreignKey: 'order_id', onDelete: 'CASCADE' });
@@ -62,6 +63,10 @@ ProductImage.belongsTo(Product, { foreignKey: 'product_id' });
 favorite.belongsTo(User, { foreignKey: 'user_id' });
 favorite.belongsTo(Product, { foreignKey: 'product_id' });
 
+review.belongsTo(User, { foreignKey: 'user_id' });
+review.belongsTo(Product, { foreignKey: 'product_id' });
+review.belongsTo(product_options, { foreignKey: 'option_id' });
+
 // 필요한 모델들 export
 module.exports = {
   order,
@@ -73,4 +78,5 @@ module.exports = {
   Cart,
   User,
   favorite,
+  review,
 };

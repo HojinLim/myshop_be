@@ -10,6 +10,7 @@ const paymentRoutes = require('./routes/payments');
 const pointsRoutes = require('./routes/points');
 const orderRoutes = require('./routes/order');
 const favoriteRoutes = require('./routes/favorite');
+const reviewRoutes = require('./routes/review');
 const User = require('./models/User');
 const app = express();
 
@@ -52,6 +53,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/points', pointsRoutes);
 app.use('/api/order', orderRoutes);
 app.use('/api/favorite', favoriteRoutes);
+app.use('/api/review', reviewRoutes);
 
 const PORT = process.env.PORT || 5000;
 
