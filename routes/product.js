@@ -115,7 +115,6 @@ router.post('/delete_product', async (req, res) => {
 
     // ✅ 2. AWS S3에서 이미지 삭제
     for (const image of images) {
-      // const imageKey = image.imageUrl.split('/').pop(); // ✅ S3에서 파일 이름 추출
       const imageKey = image.imageUrl;
 
       const deleteParams = {

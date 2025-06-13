@@ -12,11 +12,9 @@ const createS3Uploader = () => {
         cb(null, { fieldName: file.fieldname });
       },
       key: (req, file, cb) => {
-        // if (!file) return;
         console.log(file);
 
         const fieldName = file.fieldname;
-        // file.fieldname === 'mainImages' ? 'mainImages' : 'detailImages'; // ✅ 필드네임 기반 폴더 설정
         const originalName = file.originalname.replace(/\s+/g, '_');
         const type = originalName.split('.').pop();
         const timestamp = Date.now();

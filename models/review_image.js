@@ -2,41 +2,21 @@ const { DataTypes } = require('sequelize');
 
 const sequelize = require('../config/sequelize');
 
-const review = sequelize.define(
-  'review',
+const review_image = sequelize.define(
+  'review_image',
   {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    product_id: {
+    review_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    option_id: {
-      type: DataTypes.INTEGER,
+    imageUrl: {
+      type: DataTypes.STRING,
       allowNull: false,
-    },
-    user_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    rating: {
-      type: DataTypes.INTEGER, // 1~5 점수
-      allowNull: false,
-    },
-    content: {
-      type: DataTypes.TEXT,
-    },
-    gender: {
-      type: DataTypes.ENUM('male', 'female'),
-    },
-    height: {
-      type: DataTypes.INTEGER,
-    },
-    weight: {
-      type: DataTypes.INTEGER,
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -54,4 +34,4 @@ const review = sequelize.define(
   }
 );
 
-module.exports = review;
+module.exports = review_image;
