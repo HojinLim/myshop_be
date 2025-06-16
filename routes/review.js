@@ -6,6 +6,7 @@ const {
   Product,
   product_options,
   ProductImage,
+  User,
 } = require('../models');
 const router = express.Router();
 const createS3Uploader = require('../config/createS3Uploader');
@@ -22,7 +23,16 @@ const upload = createS3Uploader().fields([
 // 리뷰 등록
 router.post('/create', upload, async (req, res) => {
   try {
-    const { product_id, option_id, user_id, rating, content } = req.body;
+    const {
+      product_id,
+      option_id,
+      user_id,
+      rating,
+      content,
+      gender,
+      weight,
+      height,
+    } = req.body;
     const files = req.files['reviewImage'] || [];
 
     const newReview = await review.create({
@@ -31,6 +41,9 @@ router.post('/create', upload, async (req, res) => {
       option_id,
       content,
       rating,
+      gender,
+      weight,
+      height,
     });
 
     let newImages;
@@ -94,18 +107,7 @@ router.delete('/delete/:id', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
-// 특정 상품 리뷰 조회
-router.get('/:productId', async (req, res) => {
-  try {
-    const reviews = await review.findAll({
-      where: { product_id: req.params.productId },
-      order: [['createdAt', 'DESC']],
-    });
-    res.json(reviews);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+
 // 유저 리뷰 조회
 router.get('/me/:userId', async (req, res) => {
   try {
@@ -136,6 +138,52 @@ router.get('/me/:userId', async (req, res) => {
 
     res.json(reviews);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+// 특정 상품 리뷰 조회
+router.get('/:productId', async (req, res) => {
+  const productId = req.params.productId;
+  try {
+    //  리뷰 전체 조회 (이미지 포함)
+    const reviews = await review.findAll({
+      where: { product_id: productId },
+      include: [
+        {
+          model: review_image,
+          attributes: ['imageUrl'],
+        },
+        {
+          model: User,
+          attributes: ['username'],
+        },
+        {
+          model: product_options,
+          attributes: ['color', 'size'],
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    //  rating 평균 계산
+    const { avg_rating } = await review.findOne({
+      where: { product_id: productId },
+      attributes: [
+        [
+          review.sequelize.fn('AVG', review.sequelize.col('rating')),
+          'avg_rating',
+        ],
+      ],
+      raw: true,
+    });
+    console.log(avg_rating);
+
+    res.json({
+      averageRating: parseFloat(avg_rating).toFixed(1),
+      reviews,
+    });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
