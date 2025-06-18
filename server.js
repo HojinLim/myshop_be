@@ -12,6 +12,7 @@ const orderRoutes = require('./routes/order');
 const favoriteRoutes = require('./routes/favorite');
 const reviewRoutes = require('./routes/review');
 const searchRoutes = require('./routes/search');
+const reviewLikeRoutes = require('./routes/review_like');
 const User = require('./models/User');
 const app = express();
 
@@ -56,6 +57,7 @@ app.use('/api/order', orderRoutes);
 app.use('/api/favorite', favoriteRoutes);
 app.use('/api/review', reviewRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/review_like', reviewLikeRoutes);
 
 const PORT = process.env.PORT || 5000;
 

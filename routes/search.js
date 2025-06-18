@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
-const { Product } = require('../models');
-const { Op } = require('sequelize');
+const { Product, ProductImage, review } = require('../models');
+const { fn, col, Op } = require('sequelize');
 const router = express.Router();
 
 // 제품 조회(검색)
@@ -14,8 +14,24 @@ router.get('/:keyword?', async (req, res) => {
 
     const products = await Product.findAll({
       where: {
-        name: { [Op.like]: `%${keyword}%` }, // 부분 검색 적용
+        name: { [Op.like]: `%${keyword}%` },
       },
+      attributes: {
+        include: [
+          [fn('AVG', col('reviews.rating')), 'avg_rating'], // 리뷰의 평균 rating
+        ],
+      },
+      include: [
+        {
+          model: ProductImage,
+          attributes: ['imageUrl'],
+        },
+        {
+          model: review,
+          attributes: ['rating'],
+        },
+      ],
+      group: ['Product.id', 'ProductImages.id'], // group by 필요
     });
     if (products.length === 0) {
       return res

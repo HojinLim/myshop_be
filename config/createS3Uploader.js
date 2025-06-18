@@ -12,8 +12,6 @@ const createS3Uploader = () => {
         cb(null, { fieldName: file.fieldname });
       },
       key: (req, file, cb) => {
-        console.log(file);
-
         const fieldName = file.fieldname;
         const originalName = file.originalname.replace(/\s+/g, '_');
         const type = originalName.split('.').pop();

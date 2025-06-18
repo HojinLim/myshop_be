@@ -12,6 +12,7 @@ const point_history = require('./point_history');
 const favorite = require('./favorite');
 const review = require('./review');
 const review_image = require('./review_image');
+const review_like = require('./review_like');
 
 // 관계 설정
 order.hasMany(order_item, { foreignKey: 'order_id', onDelete: 'CASCADE' });
@@ -49,6 +50,10 @@ Product.hasMany(product_options, {
   foreignKey: 'product_id',
   onDelete: 'CASCADE',
 });
+Product.hasMany(review, {
+  foreignKey: 'product_id',
+  onDelete: 'CASCADE',
+});
 
 product_options.belongsTo(Product, {
   foreignKey: 'product_id',
@@ -69,6 +74,22 @@ review.belongsTo(Product, { foreignKey: 'product_id' });
 review.belongsTo(product_options, { foreignKey: 'option_id' });
 review.hasMany(review_image, { foreignKey: 'review_id' });
 review_image.belongsTo(review, {
+  foreignKey: 'review_id',
+  onDelete: 'CASCADE',
+});
+
+User.belongsToMany(review, {
+  through: review_like,
+  foreignKey: 'user_id',
+  otherKey: 'review_id',
+});
+
+review.belongsToMany(User, {
+  through: review_like,
+  foreignKey: 'review_id',
+  otherKey: 'user_id',
+});
+review.hasMany(review_like, {
   foreignKey: 'review_id',
   onDelete: 'CASCADE',
 });

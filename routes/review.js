@@ -10,8 +10,12 @@ const {
 } = require('../models');
 const router = express.Router();
 const createS3Uploader = require('../config/createS3Uploader');
-const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const {
+  DeleteObjectCommand,
+  DeleteObjectsCommand,
+} = require('@aws-sdk/client-s3');
 const s3 = require('../config/s3');
+const review_like = require('../models/review_like');
 
 const upload = createS3Uploader().fields([
   {
@@ -63,16 +67,65 @@ router.post('/create', upload, async (req, res) => {
 });
 
 // 리뷰 수정
-router.put('/update/:id', async (req, res) => {
+router.post('/update/:reviewId', upload, async (req, res) => {
   try {
-    const { rating, content, image } = req.body;
+    const { reviewId } = req.params;
+    const {
+      rating,
+      content,
+      gender,
+      weight,
+      height,
+      deleteImageIds = '[]', // 삭제할 이미지 ID 리스트 (프론트에서 전달)
+    } = req.body;
+    console.log('req.files:', req.files);
+    console.log('req.body:', req.body);
+
+    const parsedDeleteImageIds = JSON.parse(deleteImageIds);
+    const files = req.files['reviewImage'] || [];
+
+    // 리뷰 업데이트
     await review.update(
-      { rating, content, image },
-      { where: { id: req.params.id } }
+      { rating, content, gender, weight, height },
+      { where: { id: reviewId } }
     );
-    res.json({ message: '수정 완료' });
+
+    // 삭제할 이미지 DB에서 삭제 및 S3에서도 삭제
+    if (parsedDeleteImageIds.length > 0) {
+      const imagesToDelete = await review_image.findAll({
+        where: { id: parsedDeleteImageIds, review_id: reviewId },
+      });
+      console.log(imagesToDelete.map((img) => ({ Key: img.imageUrl })));
+
+      // S3 삭제
+
+      const deleteParams = {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Delete: {
+          Objects: imagesToDelete.map((img) => ({ Key: img.imageUrl })),
+          Quiet: true,
+        },
+      };
+      await s3.send(new DeleteObjectsCommand(deleteParams));
+
+      // DB 삭제
+      await review_image.destroy({ where: { id: parsedDeleteImageIds } });
+    }
+
+    // 새 이미지 추가
+    let newImages = [];
+    if (files.length > 0) {
+      const newImageRecords = files.map((file) => ({
+        review_id: reviewId,
+        imageUrl: file.key,
+      }));
+      newImages = await review_image.bulkCreate(newImageRecords);
+    }
+
+    res.status(200).json({ message: '리뷰 수정 완료', newImages });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -117,21 +170,21 @@ router.get('/me/:userId', async (req, res) => {
       include: [
         {
           model: Product,
-          attributes: ['name'], // 상품 이름만 가져오기
+          attributes: ['id', 'name'], // 상품 이름만 가져오기
           include: [
             {
               model: ProductImage,
-              attributes: ['imageUrl'],
+              attributes: ['id', 'imageUrl'],
             },
           ],
         },
         {
           model: product_options,
-          attributes: ['size', 'color'],
+          attributes: ['id', 'size', 'color'],
         },
         {
           model: review_image,
-          attributes: ['imageUrl'], // 리뷰 이미지도 같이 가져오기
+          attributes: ['id', 'imageUrl'], // 리뷰 이미지도 같이 가져오기
         },
       ],
     });
@@ -142,8 +195,8 @@ router.get('/me/:userId', async (req, res) => {
   }
 });
 // 특정 상품 리뷰 조회
-router.get('/:productId', async (req, res) => {
-  const productId = req.params.productId;
+router.get('/', async (req, res) => {
+  const { userId, productId } = req.query;
   try {
     //  리뷰 전체 조회 (이미지 포함)
     const reviews = await review.findAll({
@@ -161,7 +214,30 @@ router.get('/:productId', async (req, res) => {
           model: product_options,
           attributes: ['color', 'size'],
         },
+        {
+          model: review_like, // ← 좋아요 모델
+        },
       ],
+      attributes: {
+        include: [
+          // 좋아요 개수
+          [
+            review.sequelize.literal(`(
+          SELECT COUNT(*) FROM review_like AS rl
+          WHERE rl.review_id = review.id
+        )`),
+            'likeCount',
+          ],
+          // 내가 누른 좋아요 유무
+          [
+            review.sequelize.literal(`(
+          SELECT COUNT(*) > 0 FROM review_like AS rl
+          WHERE rl.review_id = review.id AND rl.user_id = ${userId}
+        )`),
+            'isLiked',
+          ],
+        ],
+      },
       order: [['createdAt', 'DESC']],
     });
 
