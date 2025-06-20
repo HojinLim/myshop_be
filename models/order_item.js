@@ -27,14 +27,6 @@ const order_item = sequelize.define(
         key: 'id',
       },
     },
-    // product_id: {
-    //   type: DataTypes.INTEGER,
-    //   allowNull: false,
-    //   references: {
-    //     model: 'Product',
-    //     key: 'id',
-    //   },
-    // },
     option_id: {
       type: DataTypes.INTEGER,
       allowNull: false,

@@ -54,7 +54,7 @@ router.get('/check', async (req, res) => {
   }
 });
 // 🔘 현재 아이템의 찜 수
-router.get('/count', async (req, res) => {
+router.get('/product_count', async (req, res) => {
   const { productId } = req.query;
 
   try {
@@ -65,6 +65,25 @@ router.get('/count', async (req, res) => {
     res.json({ productId, count });
   } catch (err) {
     res.status(500).json({ message: '찜 수 조회 실패', error: err });
+  }
+});
+// 🔘 나의 찜 수
+router.get('/count', async (req, res) => {
+  const { userId } = req.query;
+
+  try {
+    const count = await favorite.count({
+      where: { user_id: userId },
+    });
+    return res.status(200).json({
+      message: '찜 개수 가져오기 성공',
+      count,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: '찜 개수 가져오기 실패',
+      error,
+    });
   }
 });
 

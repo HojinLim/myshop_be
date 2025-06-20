@@ -263,4 +263,23 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// 리뷰 개수
+router.get('/count', async (req, res) => {
+  const { userId } = req.query;
+
+  try {
+    const count = await review.count({
+      where: { user_id: userId },
+    });
+    return res.status(200).json({
+      message: '리뷰 개수 가져오기 성공',
+      count,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: '리뷰 개수 가져오기 실패',
+      error,
+    });
+  }
+});
 module.exports = router;

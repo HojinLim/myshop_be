@@ -50,5 +50,24 @@ router.get('/', async (req, res) => {
     });
   }
 });
+// 주문내역 개수
+router.get('/count', async (req, res) => {
+  const { userId } = req.query;
+
+  try {
+    const count = await order.count({
+      where: { user_id: userId },
+    });
+    return res.status(200).json({
+      message: '주문내역 개수 가져오기 성공',
+      count,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: '주문내역 개수 가져오기 실패',
+      error,
+    });
+  }
+});
 
 module.exports = router;
