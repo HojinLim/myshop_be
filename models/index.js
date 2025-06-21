@@ -91,8 +91,10 @@ review.belongsToMany(User, {
 });
 review.hasMany(review_like, {
   foreignKey: 'review_id',
+  as: 'likes',
   onDelete: 'CASCADE',
 });
+review_like.belongsTo(review, { foreignKey: 'review_id' });
 
 // 필요한 모델들 export
 module.exports = {

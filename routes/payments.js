@@ -17,7 +17,6 @@ router.post('/verify', async (req, res) => {
     usedPoint = 0,
     order_items = [],
   } = req.body;
-  console.log(req.body);
 
   try {
     // 1. 아임포트 토큰 발급
@@ -119,6 +118,52 @@ router.post('/verify', async (req, res) => {
     res.status(500).send({ success: false, message: '서버 오류' });
   }
 });
+// 실 결제 금액없이 포인트로 상품 구매
+router.post('/without_money', async (req, res) => {
+  const { userId, totalPrice, usedPoint = 0, order_items = [] } = req.body;
+  try {
+    const newOrder = await order.create({
+      user_id: userId,
+      totalPrice,
+      payment_method: 'points',
+      status: 'paid',
+      imp_uid: null,
+      amount_paid_by_pg: 0,
+      amount_paid_by_point: usedPoint,
+    });
+
+    // 포인트 차감 내역 저장 (사용했을 경우)
+    if (usedPoint > 0) {
+      await point_history.create({
+        user_id: userId,
+        order_id: newOrder.id,
+        point: -usedPoint,
+        type: 'used',
+        description: `주문 #${newOrder.id}에 포인트 사용`,
+      });
+    }
+    await User.decrement('points', {
+      by: usedPoint,
+      where: { id: userId },
+    });
+    //주문 상세(order_item) 저장 (장바구니 or 구매 옵션 기반)
+    for (const item of order_items) {
+      await order_item.create({
+        order_id: newOrder.id,
+        user_id: userId,
+        product_id: item.Product.id,
+        option_id: item.id,
+        price: item.price,
+        quantity: item.quantity,
+        status: 'pending',
+      });
+    }
+
+    res.status(200).json({ newOrder, message: '결제 성공!' });
+  } catch (error) {
+    res.status(400).json({ error, message: '결제 실패!' });
+  }
+});
 
 // 결제 취소
 router.post('/cancel', async (req, res) => {
@@ -170,6 +215,7 @@ router.post('/cancel', async (req, res) => {
         await order_item.update({ status: 'refunded' }, { where: { id: id } });
       }
     }
+    // TODO 포인트 결시한 내역 있을 시 포인트 환불
 
     res.status(200).json({ success: true, data: data.response });
   } catch (error) {

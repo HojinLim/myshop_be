@@ -43,7 +43,6 @@ const order = sequelize.define(
     },
     imp_uid: {
       type: DataTypes.STRING,
-      allowNull: false,
     },
     createdAt: {
       type: DataTypes.DATE,

@@ -1,4 +1,5 @@
 require('dotenv').config();
+const sequelize = require('../config/sequelize');
 const express = require('express');
 const {
   review,
@@ -167,6 +168,18 @@ router.get('/me/:userId', async (req, res) => {
     const reviews = await review.findAll({
       where: { user_Id: req.params.userId },
       order: [['createdAt', 'DESC']],
+      attributes: {
+        include: [
+          [
+            sequelize.literal(`(
+          SELECT COUNT(*) 
+          FROM review_like AS rl 
+          WHERE rl.review_id = review.id
+        )`),
+            'likeCount',
+          ],
+        ],
+      },
       include: [
         {
           model: Product,
@@ -185,6 +198,12 @@ router.get('/me/:userId', async (req, res) => {
         {
           model: review_image,
           attributes: ['id', 'imageUrl'], // 리뷰 이미지도 같이 가져오기
+        },
+        {
+          model: review_like,
+          as: 'likes',
+          attributes: [],
+          required: false,
         },
       ],
     });
@@ -216,6 +235,7 @@ router.get('/', async (req, res) => {
         },
         {
           model: review_like, // ← 좋아요 모델
+          as: 'likes',
         },
       ],
       attributes: {

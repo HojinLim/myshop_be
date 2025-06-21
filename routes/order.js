@@ -12,9 +12,10 @@ const { Op } = require('sequelize');
 const router = express.Router();
 
 // 주문내역 리스트 가져오기
-router.get('/', async (req, res) => {
+router.post('/', async (req, res) => {
   const { page = 1, limit = 5 } = req.body;
   const { userId } = req.query;
+  console.log(req.body);
 
   const offset = (page - 1) * limit;
   try {
@@ -22,7 +23,7 @@ router.get('/', async (req, res) => {
       where: { user_id: userId },
       limit,
       offset,
-      order: [['createdAt', 'DESC']], // 최신순 정렬 (옵션)
+      // order: [['createdAt', 'ASC']], // 최신순 정렬 (옵션)
       include: [
         {
           model: order_item,
@@ -35,13 +36,13 @@ router.get('/', async (req, res) => {
         },
       ],
     });
-
-    console.log('총 개수:', count); // 전체 주문 개수
-    console.log('현재 페이지 결과:', rows); // 실제 결과 5개
-
+    // const totalPages = Math.ceil(count / limit);
+    let totalCount = count;
     return res.status(200).json({
       message: '카트 가져오기 성공',
       data: rows,
+      limit,
+      totalCount,
     });
   } catch (error) {
     return res.status(400).json({
