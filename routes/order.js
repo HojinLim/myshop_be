@@ -15,15 +15,14 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   const { page = 1, limit = 5 } = req.body;
   const { userId } = req.query;
-  console.log(req.body);
 
   const offset = (page - 1) * limit;
   try {
     const { count, rows } = await order.findAndCountAll({
       where: { user_id: userId },
-      limit,
-      offset,
-      // order: [['createdAt', 'ASC']], // 최신순 정렬 (옵션)
+      // limit,
+      // offset,
+      order: [['createdAt', 'DESC']], // 최신순 정렬 (옵션)
       include: [
         {
           model: order_item,
@@ -39,14 +38,14 @@ router.post('/', async (req, res) => {
     // const totalPages = Math.ceil(count / limit);
     let totalCount = count;
     return res.status(200).json({
-      message: '카트 가져오기 성공',
+      message: '주문내역 가져오기 성공',
       data: rows,
       limit,
       totalCount,
     });
   } catch (error) {
     return res.status(400).json({
-      message: '카트 가져오기 실패',
+      message: '주문내역 가져오기 실패',
       error,
     });
   }

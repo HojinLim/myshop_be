@@ -6,6 +6,7 @@ const axios = require('axios');
 const { getToken } = require('../utils');
 const router = express.Router();
 const { order, order_item, User, point_history } = require('../models');
+const { where } = require('sequelize');
 
 //  결제 검증
 router.post('/verify', async (req, res) => {
@@ -166,64 +167,105 @@ router.post('/without_money', async (req, res) => {
 });
 
 // 결제 취소
-router.post('/cancel', async (req, res) => {
-  const {
-    imp_uid,
-    amount,
-    totalAmount,
-    reason,
-    order_id,
-    order_item_ids = [],
-  } = req.body;
+
+router.post('/refund', async (req, res) => {
+  const { imp_uid, amount, reason, order_item_id } = req.body;
 
   try {
-    const access_token = await getToken();
+    // 주문 아이템 먼저 조회
+    const orderItem = await order_item.findOne({
+      where: { id: order_item_id },
+    });
 
-    const { data } = await axios.post(
-      'https://api.iamport.kr/payments/cancel',
-      {
-        imp_uid: imp_uid, // 필수
-        amount: amount, // 부분 환불 금액
-        checksum: totalAmount, // 환불 전 결제 금액(전체금액)
-        reason: reason || '테스트 환불', // 선택
-      },
-      {
-        headers: { Authorization: access_token },
-      }
+    if (!orderItem) {
+      return res
+        .status(404)
+        .json({ success: false, message: '주문 아이템 없음' });
+    }
+
+    // 주문 조회
+    const orderData = await order.findOne({
+      where: { id: orderItem.order_id },
+    });
+
+    if (!orderData) {
+      return res.status(404).json({ success: false, message: '주문 없음' });
+    }
+
+    // 실 결제(imp_uid) 환불
+    let cancel_result = null;
+    if (imp_uid) {
+      const access_token = await getToken();
+
+      cancel_result = await axios.post(
+        'https://api.iamport.kr/payments/cancel',
+        {
+          imp_uid,
+          amount, // 환불할 금액 (부분 환불 가능)
+          // checksum: totalAmount, // 전체 결제 금액
+          reason: reason || '환불 처리',
+        },
+        {
+          headers: { Authorization: access_token },
+        }
+      );
+    }
+
+    // 주문 아이템 환불 처리
+    await order_item.update(
+      { status: 'refunded' },
+      { where: { id: order_item_id } }
     );
 
-    // order item ids를 파라미터에 보내면 부분 환불
+    // 전체 vs 부분 환불 판단
+    const totalCount = await order_item.count({
+      where: { order_id: orderData.id },
+    });
+    const refundedCount = await order_item.count({
+      where: { order_id: orderData.id, status: 'refunded' },
+    });
 
-    // 빈값으로 보내면 전체 환불로 처리
-    if (order_item_ids.length > 0) {
-      await order.update(
-        { status: 'refunded' },
-        { where: { order_id: order_id } }
-      );
-      await order_item.update(
-        { status: 'refunded' },
-        { where: { order_id: order_id } }
-      );
-    }
-    // 부분 환불
-    else {
-      await order.update(
-        { status: 'partial_refunded' },
-        { where: { order_id: order_id } }
-      );
-      for (const id of order_item_ids) {
-        await order_item.update({ status: 'refunded' }, { where: { id: id } });
-      }
-    }
-    // TODO 포인트 결시한 내역 있을 시 포인트 환불
+    const orderStatus =
+      refundedCount === totalCount ? 'refunded' : 'partial_refunded';
 
-    res.status(200).json({ success: true, data: data.response });
+    await order.update(
+      { status: orderStatus },
+      { where: { id: orderData.id } }
+    );
+
+    // 포인트 환불 처리
+    const refundPoint = orderItem.quantity * orderItem.price;
+
+    if (
+      orderData.payment_method === 'points' ||
+      orderData.payment_method === 'mix'
+    ) {
+      await point_history.create({
+        user_id: orderItem.user_id,
+        order_id: orderData.id,
+        point: refundPoint,
+        type: 'refunded',
+        description: `주문 아이템 #${order_item_id} 포인트 환불`,
+      });
+
+      await User.increment('points', {
+        by: refundPoint,
+        where: { id: orderItem.user_id },
+      });
+    }
+
+    // 응답
+    res.status(200).json({
+      success: true,
+      message: '환불 완료',
+      data: cancel_result?.data?.response || null,
+    });
   } catch (error) {
     console.error('결제 취소 오류:', error.response?.data || error.message);
     res.status(500).json({
       success: false,
       message: '결제 취소 중 오류 발생',
-      error: error.response?.data,
+      error: error.response?.data || error.message,
     });
   }
 });

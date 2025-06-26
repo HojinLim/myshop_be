@@ -8,9 +8,9 @@ const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const createS3Uploader = require('../config/createS3Uploader');
 
 // 상품 리스트 가져오기
-router.get('/products', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const { category, id } = req.query;
+    const { id, category } = req.query;
 
     let whereCondition = {}; // ✅ 기본값을 빈 객체로 설정
 
@@ -19,13 +19,14 @@ router.get('/products', async (req, res) => {
     } else if (id) {
       whereCondition.id = id;
     }
+    console.log(whereCondition);
 
     const products = await Product.findAll({
       where: whereCondition, // ✅ 조건이 없으면 전체 조회
       include: [
         {
           model: ProductImage,
-          attributes: ['imageUrl', 'type'],
+          attributes: ['id', 'imageUrl', 'type'],
         },
       ],
     });
@@ -262,6 +263,62 @@ router.post('/update_options', async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: '옵션 업데이트 실패', error });
+  }
+});
+// 상품 사진 업데이트
+router.post('/update_photo/:productId', upload, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const mainImageUrls = (req.files.mainImages || []).map((file) => file.key);
+    const detailImageUrls = (req.files.detailImages || []).map(
+      (file) => file.key
+    );
+    const deleteImageIds = JSON.parse(req.body.deleteImageIds || '[]');
+
+    if (deleteImageIds.length > 0) {
+      const imagesToDelete = await ProductImage.findAll({
+        where: { id: deleteImageIds, product_id: productId },
+      });
+
+      for (const image of imagesToDelete) {
+        const imageKey = image.imageUrl;
+
+        const deleteParams = {
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: imageKey,
+        };
+
+        await s3.send(new DeleteObjectCommand(deleteParams));
+      }
+
+      //  DB 삭제
+      await ProductImage.destroy({
+        where: { id: deleteImageIds },
+      });
+    }
+
+    // 이미지 저장
+    const imageRecords = [
+      ...mainImageUrls.map((url) => ({
+        product_id: productId,
+        imageUrl: url,
+        type: 'main',
+      })),
+      ...detailImageUrls.map((url) => ({
+        product_id: productId,
+        imageUrl: url,
+        type: 'detail',
+      })),
+    ];
+    await ProductImage.bulkCreate(imageRecords);
+
+    return res.status(200).json({
+      message: '상품 사진 업데이트 성공',
+      ProductImage,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: '상품 업데이트 실패', error });
   }
 });
 // 상품 옵션 삭제
