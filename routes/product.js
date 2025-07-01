@@ -1,5 +1,10 @@
 const express = require('express');
-const { Product, ProductImage, product_options } = require('../models');
+const {
+  Product,
+  ProductImage,
+  product_options,
+  favorite,
+} = require('../models');
 const router = express.Router();
 
 const s3 = require('../config/s3');
@@ -19,14 +24,17 @@ router.get('/', async (req, res) => {
     } else if (id) {
       whereCondition.id = id;
     }
-    console.log(whereCondition);
-
+    if (whereCondition.category === '전체') whereCondition = {};
     const products = await Product.findAll({
       where: whereCondition, // ✅ 조건이 없으면 전체 조회
       include: [
         {
           model: ProductImage,
           attributes: ['id', 'imageUrl', 'type'],
+        },
+        {
+          model: favorite,
+          attributes: ['id', 'product_id'],
         },
       ],
     });

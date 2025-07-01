@@ -140,20 +140,23 @@ router.delete('/delete/:id', async (req, res) => {
     });
 
     // 1. S3에서 이미지 삭제
-    for (const image of images) {
-      const imageKey = image.imageUrl;
-      console.log('Deleting from S3:', imageKey);
+    // 리뷰 이미지가 존재할 시
+    if (images) {
+      for (const image of images) {
+        const imageKey = image.imageUrl;
 
-      const deleteParams = {
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: imageKey,
-      };
+        const deleteParams = {
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: imageKey,
+        };
 
-      await s3.send(new DeleteObjectCommand(deleteParams));
+        await s3.send(new DeleteObjectCommand(deleteParams));
+      }
+
+      // 2. DB에서 리뷰 및 리뷰 이미지 삭제
+      await review_image.destroy({ where: { review_id: reviewId } });
     }
 
-    // 2. DB에서 리뷰 및 리뷰 이미지 삭제
-    await review_image.destroy({ where: { review_id: reviewId } });
     await review.destroy({ where: { id: reviewId } });
 
     res.json({ message: '삭제 완료' });
@@ -272,7 +275,6 @@ router.get('/', async (req, res) => {
       ],
       raw: true,
     });
-    console.log(avg_rating);
 
     res.json({
       averageRating: parseFloat(avg_rating).toFixed(1),

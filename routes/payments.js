@@ -202,7 +202,7 @@ router.post('/refund', async (req, res) => {
         {
           imp_uid,
           amount, // 환불할 금액 (부분 환불 가능)
-          // checksum: totalAmount, // 전체 결제 금액
+          checksum: amount, // 전체 결제 금액
           reason: reason || '환불 처리',
         },
         {

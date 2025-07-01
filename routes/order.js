@@ -17,12 +17,14 @@ router.post('/', async (req, res) => {
   const { userId } = req.query;
 
   const offset = (page - 1) * limit;
+
   try {
     const { count, rows } = await order.findAndCountAll({
       where: { user_id: userId },
-      // limit,
-      // offset,
-      order: [['createdAt', 'DESC']], // 최신순 정렬 (옵션)
+      limit: parseInt(limit),
+      offset,
+      order: [['createdAt', 'DESC']],
+      distinct: true,
       include: [
         {
           model: order_item,
@@ -35,13 +37,12 @@ router.post('/', async (req, res) => {
         },
       ],
     });
-    // const totalPages = Math.ceil(count / limit);
-    let totalCount = count;
+
     return res.status(200).json({
       message: '주문내역 가져오기 성공',
       data: rows,
-      limit,
-      totalCount,
+      limit: parseInt(limit),
+      totalCount: count,
     });
   } catch (error) {
     return res.status(400).json({
@@ -50,6 +51,7 @@ router.post('/', async (req, res) => {
     });
   }
 });
+
 // 주문내역 개수
 router.get('/count', async (req, res) => {
   const { userId } = req.query;

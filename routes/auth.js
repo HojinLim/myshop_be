@@ -185,36 +185,13 @@ router.post('/upload', upload.single('profile'), async (req, res) => {
 
     // 프로필 이미지 URL 업데이트
     user.profileUrl = req.file.key; // S3의 파일 경로
+    // await user.update({ profileUrl: req.file.key });
     await user.save();
 
     return res.json({ message: '업로드 성공!', imageUrl: req.file.location });
   } catch (error) {
     console.error('DB 저장 실패:', error);
     return res.status(500).json({ error: 'DB 저장 실패' });
-  }
-});
-
-// 프로필 가져오기
-router.post('/get_profile', async (req, res) => {
-  try {
-    const bucketName = process.env.S3_BUCKET_NAME;
-    const region = process.env.AWS_REGION;
-
-    const { profileUrl } = req.body;
-
-    const fileName = profileUrl;
-
-    // 예시로 임시 URL을 반환
-    const imageUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${fileName}`;
-
-    return res.json({
-      message: '프로필 링크 가져오기 성공',
-      profileUrl: imageUrl,
-    });
-  } catch (error) {
-    return res
-      .status(400)
-      .json({ message: '프로필 가져오기 실패', error: error });
   }
 });
 

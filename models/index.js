@@ -55,6 +55,8 @@ Product.hasMany(review, {
   onDelete: 'CASCADE',
 });
 
+Product.hasMany(favorite, { foreignKey: 'product_id' });
+
 product_options.belongsTo(Product, {
   foreignKey: 'product_id',
   onDelete: 'CASCADE',
