@@ -96,17 +96,7 @@ router.post('/upload_product', upload, async (req, res) => {
     return res.status(400).json({ message: '업로드 실패', error });
   }
 });
-router.post(
-  '/upload_photos',
-  createS3Uploader().array('productImages', 10),
-  async (req, res) => {
-    try {
-      return res.status(201).json({ message: '업로드 성공', productList });
-    } catch (error) {
-      return res.status(400).json({ message: '업로드 에러', error });
-    }
-  }
-);
+
 // 상품 삭제
 router.post('/delete_product', async (req, res) => {
   const { product_id } = req.query;
@@ -116,27 +106,28 @@ router.post('/delete_product', async (req, res) => {
   }
 
   try {
-    // ✅ 1. 해당 상품의 이미지 URL 가져오기
+    //   RDS(MySQL)에서 상품 삭제
+    await Product.destroy({ where: { id: product_id } }); //  상품 삭제
+
+    //   해당 상품의 이미지 URL 가져오기
     const images = await ProductImage.findAll({
       where: { product_id },
       attributes: ['imageUrl'],
     });
 
-    // ✅ 2. AWS S3에서 이미지 삭제
+    //  AWS S3에서 이미지 삭제
     for (const image of images) {
       const imageKey = image.imageUrl;
 
       const deleteParams = {
-        Bucket: process.env.S3_BUCKET_NAME, // ✅ S3 버킷 이름
+        Bucket: process.env.S3_BUCKET_NAME, //  S3 버킷 이름
         Key: imageKey,
       };
 
       await s3.send(new DeleteObjectCommand(deleteParams));
     }
-
-    // ✅ 3. RDS(MySQL)에서 상품 및 관련 이미지 삭제
-    await ProductImage.destroy({ where: { product_id } }); // ✅ 상품 이미지 삭제
-    await Product.destroy({ where: { id: product_id } }); // ✅ 상품 삭제
+    //   RDS(MySQL)에서 관련 이미지 삭제
+    await ProductImage.destroy({ where: { product_id } }); //  상품 이미지 삭제
 
     return res.status(200).json({ message: '상품 삭제 완료' });
   } catch (error) {

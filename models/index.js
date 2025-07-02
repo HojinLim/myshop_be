@@ -64,10 +64,6 @@ product_options.belongsTo(Product, {
 
 ProductImage.belongsTo(Product, { foreignKey: 'product_id' });
 
-// favorite.associate = (models) => {
-//   favorite.belongsTo(models.User, { foreignKey: 'user_id' });
-//   favorite.belongsTo(models.Product, { foreignKey: 'product_id' });
-// };
 favorite.belongsTo(User, { foreignKey: 'user_id' });
 favorite.belongsTo(Product, { foreignKey: 'product_id' });
 

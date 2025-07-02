@@ -7,7 +7,7 @@ const {
   product_options,
 } = require('../models');
 
-const { Op } = require('sequelize');
+const { Op, fn, col, literal } = require('sequelize');
 
 const router = express.Router();
 
@@ -67,6 +67,49 @@ router.get('/count', async (req, res) => {
   } catch (error) {
     return res.status(400).json({
       message: '주문내역 개수 가져오기 실패',
+      error,
+    });
+  }
+});
+router.get('/sales', async (req, res) => {
+  try {
+    const result = await order_item.findAll({
+      where: {
+        status: { [Op.ne]: 'refunded' },
+      },
+      include: [
+        {
+          model: product_options,
+          include: [
+            {
+              model: Product,
+            },
+          ],
+        },
+      ],
+      attributes: [
+        [fn('DATE_FORMAT', col('order_item.createdAt'), '%Y-%m'), 'month'],
+        [col('product_option->Product.category'), 'category'],
+        [
+          fn('SUM', literal('order_item.quantity * order_item.price')),
+          'totalSales',
+        ],
+      ],
+      group: [
+        fn('DATE_FORMAT', col('order_item.createdAt'), '%Y-%m'),
+        col('product_option->Product.category'),
+      ],
+      order: [[fn('DATE_FORMAT', col('order_item.createdAt'), '%Y-%m'), 'ASC']],
+      raw: false,
+    });
+
+    return res.status(200).json({
+      message: '매출 가져오기 성공',
+      result,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: '매출 가져오기 실패',
       error,
     });
   }

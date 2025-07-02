@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { favorite, Product, ProductImage } = require('../models');
 
-// 🔘 찜 추가
+//  찜 추가
 router.post('/create', async (req, res) => {
   const { userId, productId } = req.body;
 
@@ -20,7 +20,7 @@ router.post('/create', async (req, res) => {
   }
 });
 
-// 🔘 찜 삭제
+//  찜 삭제
 router.delete('/delete', async (req, res) => {
   const { userId, productId } = req.body;
 
@@ -38,7 +38,7 @@ router.delete('/delete', async (req, res) => {
     res.status(500).json({ message: '찜 삭제 실패', error: err });
   }
 });
-// 🔘 현재 아이템 찜 여부
+//  현재 아이템 찜 여부
 router.get('/check', async (req, res) => {
   // (쿼리방식)
   const { userId, productId } = req.query;
@@ -53,7 +53,7 @@ router.get('/check', async (req, res) => {
     res.status(500).json({ message: '찜 여부 확인 실패', error: err });
   }
 });
-// 🔘 현재 아이템의 찜 수
+//  현재 아이템의 찜 수
 router.get('/product_count', async (req, res) => {
   const { productId } = req.query;
 
@@ -67,7 +67,7 @@ router.get('/product_count', async (req, res) => {
     res.status(500).json({ message: '찜 수 조회 실패', error: err });
   }
 });
-// 🔘 나의 찜 수
+//  나의 찜 수
 router.get('/count', async (req, res) => {
   const { userId } = req.query;
 
@@ -87,7 +87,7 @@ router.get('/count', async (req, res) => {
   }
 });
 
-// 🔘 내 찜 목록 조회
+//  내 찜 목록 조회
 // (파라미터 방식)
 router.get('/:userId', async (req, res) => {
   const { userId } = req.params;

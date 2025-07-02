@@ -190,7 +190,7 @@ router.get('/me/:userId', async (req, res) => {
           include: [
             {
               model: ProductImage,
-              attributes: ['id', 'imageUrl'],
+              attributes: ['id', 'imageUrl', 'type'],
             },
           ],
         },

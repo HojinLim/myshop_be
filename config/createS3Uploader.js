@@ -16,7 +16,16 @@ const createS3Uploader = () => {
         const originalName = file.originalname.replace(/\s+/g, '_');
         const type = originalName.split('.').pop();
         const timestamp = Date.now();
-        const filePath = `${fieldName}/${timestamp}_${fieldName}.${type}`;
+        let filePath;
+
+        // 파일명 커스텀
+        if (req?.body?.customName) {
+          filePath = `${fieldName}/${req.body.customName}.${type}`;
+        } else {
+          filePath = `${fieldName}/${timestamp}_${fieldName}.${type}`;
+        }
+        console.log('file', file);
+        console.log('filePath', filePath);
 
         cb(null, filePath); // S3에 저장할 경로
       },

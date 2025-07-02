@@ -16,28 +16,35 @@ const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const SECRET_KEY = process.env.SECRET_KEY;
 
 // Multer + S3 설정
-const upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: process.env.S3_BUCKET_NAME,
-    metadata: (req, file, cb) => {
-      cb(null, { fieldName: file.fieldname });
-    },
-    key: (req, file, cb) => {
-      console.log('req.body:', req.body.userId); // form data 확인
-      console.log('req.file:', req.body.file); // 업로드된 파일 정보 확인
+// const upload = multer({
+//   storage: multerS3({
+//     s3: s3,
+//     bucket: process.env.S3_BUCKET_NAME,
+//     metadata: (req, file, cb) => {
+//       cb(null, { fieldName: file.fieldname });
+//     },
+//     key: (req, file, cb) => {
+//       console.log('req.body:', req.body.userId); // form data 확인
+//       console.log('req.file:', req.body.file); // 업로드된 파일 정보 확인
 
-      const userId = req.query.userId;
-      const timestamp = Date.now();
-      const originalName = file.originalname.replace(/\s+/g, '_');
-      // const filePath = `profile/${userId}/${timestamp}_${originalName}`;
-      const splited = originalName.split('.');
-      const type = splited[splited.length - 1];
-      const filePath = `profile/${userId}.${type}`;
-      cb(null, filePath); // S3에 저장할 경로
-    },
-  }),
-});
+//       const userId = req.query.userId;
+//       const timestamp = Date.now();
+//       const originalName = file.originalname.replace(/\s+/g, '_');
+//       // const filePath = `profile/${userId}/${timestamp}_${originalName}`;
+//       const splited = originalName.split('.');
+//       const type = splited[splited.length - 1];
+//       const filePath = `profile/${userId}.${type}`;
+//       cb(null, filePath); // S3에 저장할 경로
+//     },
+//   }),
+// });
+
+const createS3Uploader = require('../config/createS3Uploader');
+
+// const s3 = require('../config/s3');
+// const review_like = require('../models/review_like');
+
+const upload = createS3Uploader().single('profile');
 
 // 회원가입 API
 router.post('/register', async (req, res) => {
@@ -171,8 +178,10 @@ router.get('/me', authenticateToken, async (req, res) => {
 });
 
 // 프로필 업로드
-router.post('/upload', upload.single('profile'), async (req, res) => {
-  if (!req.file) {
+router.post('/upload', upload, async (req, res) => {
+  // const files = req.files['profile'];
+  const file = req.file;
+  if (!file) {
     return res.status(400).json({ error: '파일이 업로드되지 않았습니다.' });
   }
 
@@ -183,12 +192,16 @@ router.post('/upload', upload.single('profile'), async (req, res) => {
       return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
     }
 
-    // 프로필 이미지 URL 업데이트
-    user.profileUrl = req.file.key; // S3의 파일 경로
-    // await user.update({ profileUrl: req.file.key });
-    await user.save();
-
-    return res.json({ message: '업로드 성공!', imageUrl: req.file.location });
+    try {
+      user.profileUrl = req.file.key;
+      await user.save();
+      return res.json({ message: '업로드 성공!' });
+    } catch (error) {
+      console.error('user.save() 실패!', error);
+      return res
+        .status(500)
+        .json({ error: 'DB 저장 실패', detail: error.message });
+    }
   } catch (error) {
     console.error('DB 저장 실패:', error);
     return res.status(500).json({ error: 'DB 저장 실패' });

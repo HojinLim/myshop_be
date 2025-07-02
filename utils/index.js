@@ -21,7 +21,7 @@ const getCartItems = async (user_id) => {
             },
             {
               model: ProductImage, // ✅ 상품 이미지 조회 추가
-              attributes: ['imageUrl'],
+              attributes: ['id', 'imageUrl', 'type'],
             },
           ],
         },
