@@ -16,11 +16,11 @@ const getCartItems = async (user_id) => {
           attributes: ['id', 'name', 'originPrice'],
           include: [
             {
-              model: product_options, // ✅ 현재 옵션의 상품과 관련된 모든 옵션 조회
+              model: product_options, //  현재 옵션의 상품과 관련된 모든 옵션 조회
               attributes: ['id', 'size', 'color', 'price', 'stock'],
             },
             {
-              model: ProductImage, // ✅ 상품 이미지 조회 추가
+              model: ProductImage, //  상품 이미지 조회 추가
               attributes: ['id', 'imageUrl', 'type'],
             },
           ],
@@ -33,7 +33,7 @@ const getCartItems = async (user_id) => {
 
 const updateCartOwner = async (non_user_id, user_id) => {
   try {
-    // ✅ 비회원 장바구니 조회
+    //  비회원 장바구니 조회
     const nonMemberCart = await Cart.findAll({
       where: { user_id: non_user_id },
     });
@@ -41,13 +41,13 @@ const updateCartOwner = async (non_user_id, user_id) => {
     for (const item of nonMemberCart) {
       const { product_option_id, quantity } = item;
 
-      // ✅ 회원 장바구니에서 같은 `product_option_id` 찾기
+      //  회원 장바구니에서 같은 `product_option_id` 찾기
       const existingItem = await Cart.findOne({
         where: { user_id, product_option_id },
       });
 
       if (existingItem) {
-        // ✅ 기존 `quantity` 업데이트 (재고 초과 방지)
+        //  기존 `quantity` 업데이트 (재고 초과 방지)
         const product_option = await product_options.findOne({
           where: { id: product_option_id },
           attributes: ['stock'],
@@ -60,7 +60,7 @@ const updateCartOwner = async (non_user_id, user_id) => {
 
         await existingItem.update({ quantity: newQuantity });
       } else {
-        // ✅ 장바구니에 상품이 없으면 새로 추가
+        //  장바구니에 상품이 없으면 새로 추가
         await Cart.create({ user_id, product_option_id, quantity });
       }
     }

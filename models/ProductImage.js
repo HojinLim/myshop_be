@@ -15,7 +15,7 @@ const ProductImage = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: Product, // ✅ Product 모델을 참조해야 함
+        model: Product, //  Product 모델을 참조해야 함
         key: 'id',
       },
       onDelete: 'CASCADE',

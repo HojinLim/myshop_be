@@ -33,9 +33,9 @@ router.post('/update_categories', upload, async (req, res) => {
   try {
     let categories = JSON.parse(req.body.categories || '[]'); // JSON 변환
     let uploadedFiles = req.files || [];
-    let categoryIds = JSON.parse(req.body.categoryIds || '[]'); // ✅ JSON 변환
+    let categoryIds = JSON.parse(req.body.categoryIds || '[]'); //  JSON 변환
 
-    console.log(uploadedFiles);
+    console.log('uploadedFiles', uploadedFiles);
 
     if (categories.length > 0) {
       for (let i = 0; i < categories.length; i++) {
@@ -48,6 +48,10 @@ router.post('/update_categories', upload, async (req, res) => {
             .json({ error: '해당 카테고리를 찾을 수 없습니다.' });
         }
 
+        const existedName = await Category.findOne({
+          where: { name: categories[i].name },
+        });
+
         // 카테고리 이름 변경
         let oldName = category.name;
         category.name = categories[i].name;
@@ -59,9 +63,15 @@ router.post('/update_categories', upload, async (req, res) => {
           { where: { category: oldName } }
         );
 
-        // null이 들어올시 이미지 및 이미지 url 삭제
-        if (categories[i].upload_photo === null) {
-          // S3에서 카테고리
+        console.log('categories[i]', i + '번째', categories[i]);
+
+        // S3에서 카테고리 이미지 삭제
+        if (
+          categories[i]?.photo_delete ||
+          (categories[i]?.imageUrl && uploadedFiles[i])
+        ) {
+          if (!category?.imageUrl) return;
+
           const imageUrl = category.imageUrl; // DB에 저장된 파일 경로
 
           const deleteParams = {
@@ -73,9 +83,9 @@ router.post('/update_categories', upload, async (req, res) => {
           try {
             const command = new DeleteObjectCommand(deleteParams);
             await s3.send(command); // S3 이미지 삭제
-            console.log('✅ S3에서 이미지 삭제 성공');
+            console.log(' S3에서 이미지 삭제 성공');
           } catch (s3Error) {
-            console.error('❌ S3 이미지 삭제 실패:', s3Error);
+            console.error(' S3 이미지 삭제 실패:', s3Error);
             return res
               .status(500)
               .json({ error: 'S3 이미지 삭제에 실패했습니다.' });
@@ -85,9 +95,9 @@ router.post('/update_categories', upload, async (req, res) => {
           try {
             category.imageUrl = null;
             await category.save();
-            console.log('✅ DB 프로필 URL 업데이트 성공');
+            console.log(' DB 프로필 URL 업데이트 성공');
           } catch (dbError) {
-            console.error('❌ DB 업데이트 실패:', dbError);
+            console.error(' DB 업데이트 실패:', dbError);
             return res
               .status(500)
               .json({ error: 'DB 업데이트에 실패했습니다.' });

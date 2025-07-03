@@ -254,9 +254,15 @@ router.get('/', async (req, res) => {
           // 내가 누른 좋아요 유무
           [
             review.sequelize.literal(`(
-          SELECT COUNT(*) > 0 FROM review_like AS rl
-          WHERE rl.review_id = review.id AND rl.user_id = ${userId}
-        )`),
+    ${
+      userId
+        ? `
+      SELECT COUNT(*) > 0 FROM review_like AS rl
+      WHERE rl.review_id = review.id AND rl.user_id = ${userId}
+    `
+        : `false`
+    }
+  )`),
             'isLiked',
           ],
         ],

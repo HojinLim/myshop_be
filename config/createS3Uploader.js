@@ -1,8 +1,9 @@
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = require('./s3');
+const { v4: uuidv4 } = require('uuid');
 
-// ✅ Multer + S3 설정 (폴더 구분)
+//  Multer + S3 설정 (폴더 구분)
 const createS3Uploader = () => {
   return multer({
     storage: multerS3({
@@ -15,14 +16,15 @@ const createS3Uploader = () => {
         const fieldName = file.fieldname;
         const originalName = file.originalname.replace(/\s+/g, '_');
         const type = originalName.split('.').pop();
-        const timestamp = Date.now();
+        // const timestamp = Date.now();
+        const uniqueId = uuidv4();
         let filePath;
 
         // 파일명 커스텀
         if (req?.body?.customName) {
           filePath = `${fieldName}/${req.body.customName}.${type}`;
         } else {
-          filePath = `${fieldName}/${timestamp}_${fieldName}.${type}`;
+          filePath = `${fieldName}/${uniqueId}_${fieldName}.${type}`;
         }
         console.log('file', file);
         console.log('filePath', filePath);

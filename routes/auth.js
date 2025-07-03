@@ -239,9 +239,9 @@ router.post('/delete_profile', async (req, res) => {
     try {
       const command = new DeleteObjectCommand(deleteParams);
       await s3.send(command); // S3 이미지 삭제
-      console.log('✅ S3에서 이미지 삭제 성공');
+      console.log(' S3에서 이미지 삭제 성공');
     } catch (s3Error) {
-      console.error('❌ S3 이미지 삭제 실패:', s3Error);
+      console.error(' S3 이미지 삭제 실패:', s3Error);
       return res.status(500).json({ error: 'S3 이미지 삭제에 실패했습니다.' });
     }
 
@@ -249,15 +249,15 @@ router.post('/delete_profile', async (req, res) => {
     try {
       user.profileUrl = null; // 또는 기본 이미지 URL 설정
       await user.save();
-      console.log('✅ DB 프로필 URL 업데이트 성공');
+      console.log(' DB 프로필 URL 업데이트 성공');
     } catch (dbError) {
-      console.error('❌ DB 업데이트 실패:', dbError);
+      console.error(' DB 업데이트 실패:', dbError);
       return res.status(500).json({ error: 'DB 업데이트에 실패했습니다.' });
     }
 
     return res.json({ message: '프로필 이미지가 성공적으로 삭제되었습니다.' });
   } catch (error) {
-    console.error('❌ 프로필 이미지 삭제 실패:', error);
+    console.error(' 프로필 이미지 삭제 실패:', error);
     return res
       .status(500)
       .json({ error: '프로필 이미지 삭제 중 오류가 발생했습니다.' });

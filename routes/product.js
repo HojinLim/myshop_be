@@ -15,18 +15,24 @@ const createS3Uploader = require('../config/createS3Uploader');
 // 상품 리스트 가져오기
 router.get('/', async (req, res) => {
   try {
-    const { id, category } = req.query;
+    const { page = 1, limit = 6, id, category } = req.query;
 
-    let whereCondition = {}; // ✅ 기본값을 빈 객체로 설정
+    const offset = (page - 1) * limit;
 
-    if (category) {
+    let whereCondition = {};
+
+    if (category && category !== '전체') {
       whereCondition.category = category;
     } else if (id) {
       whereCondition.id = id;
     }
-    if (whereCondition.category === '전체') whereCondition = {};
-    const products = await Product.findAll({
-      where: whereCondition, // ✅ 조건이 없으면 전체 조회
+
+    const { count, rows: products } = await Product.findAndCountAll({
+      where: whereCondition,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['createdAt', 'DESC']], // 정렬 기준 설정
+      distinct: true, // 중복 방지
       include: [
         {
           model: ProductImage,
@@ -42,6 +48,9 @@ router.get('/', async (req, res) => {
     return res.status(200).json({
       message: '상품 가져오기 성공',
       products,
+      totalCount: count,
+      currentPage: Number(page),
+      totalPages: Math.ceil(count / limit),
     });
   } catch (error) {
     return res.status(400).json({
@@ -51,13 +60,13 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ✅ Multer 설정 (메인 이미지 & 디테일 이미지)
+//  Multer 설정 (메인 이미지 & 디테일 이미지)
 const upload = createS3Uploader().fields([
   { name: 'mainImages', maxCount: 10 },
   { name: 'detailImages', maxCount: 10 },
 ]);
 
-// ✅ 상품 업로드 API
+//  상품 업로드 API
 router.post('/upload_product', upload, async (req, res) => {
   try {
     const req_product = JSON.parse(req.body.product || '{}'); // JSON 변환
@@ -68,13 +77,13 @@ router.post('/upload_product', upload, async (req, res) => {
       (file) => file.key
     );
 
-    console.log('✅ 업로드된 메인 이미지:', mainImageUrls);
-    console.log('✅ 업로드된 상세 이미지:', detailImageUrls);
+    console.log(' 업로드된 메인 이미지:', mainImageUrls);
+    console.log(' 업로드된 상세 이미지:', detailImageUrls);
 
-    // ✅ 상품 저장
+    //  상품 저장
     const product = await Product.create(req_product);
 
-    // ✅ 이미지 저장
+    //  이미지 저장
     const imageRecords = [
       ...mainImageUrls.map((url) => ({
         product_id: product.id,
@@ -92,7 +101,7 @@ router.post('/upload_product', upload, async (req, res) => {
 
     return res.status(201).json({ message: '업로드 성공', product });
   } catch (error) {
-    console.error('❌ 업로드 에러:', error);
+    console.error(' 업로드 에러:', error);
     return res.status(400).json({ message: '업로드 실패', error });
   }
 });
@@ -131,7 +140,7 @@ router.post('/delete_product', async (req, res) => {
 
     return res.status(200).json({ message: '상품 삭제 완료' });
   } catch (error) {
-    console.error('❌ 상품 삭제 오류:', error);
+    console.error(' 상품 삭제 오류:', error);
     return res.status(500).json({ message: '상품 삭제 실패', error });
   }
 });
@@ -192,11 +201,11 @@ router.get('/product_options', async (req, res) => {
       },
       include: [
         {
-          model: Product, // ✅ Product 모델 포함
+          model: Product, //  Product 모델 포함
           attributes: ['id', 'name', 'originPrice'],
           include: [
             {
-              model: ProductImage, // ✅ ProductImage 모델 포함
+              model: ProductImage, //  ProductImage 모델 포함
               attributes: ['imageUrl'],
             },
           ],
@@ -249,8 +258,8 @@ router.post('/update_options', async (req, res) => {
         .json({ message: '이미 존재하는 옵션입니다.', exist_option });
     }
     const product_option = await product_options.update(
-      { size, color, stock, price }, // ✅ 업데이트할 값
-      { where: { id: Number(id) } } // ✅ 특정 상품 ID에 대해 업데이트);
+      { size, color, stock, price }, //  업데이트할 값
+      { where: { id: Number(id) } } //  특정 상품 ID에 대해 업데이트);
     );
 
     return res.status(200).json({
@@ -330,11 +339,11 @@ router.post('/delete_product_options', async (req, res) => {
 
   try {
     //  RDS(MySQL)에서 상품 옵션 삭제
-    await product_options.destroy({ where: { id: product_id } }); // ✅ 상품 옵션 삭제
+    await product_options.destroy({ where: { id: product_id } }); //  상품 옵션 삭제
 
     return res.status(200).json({ message: '상품 옵션 삭제 완료' });
   } catch (error) {
-    console.error('❌ 상품 삭제 오류:', error);
+    console.error(' 상품 삭제 오류:', error);
     return res.status(500).json({ message: '상품 옵션 삭제 실패', error });
   }
 });
