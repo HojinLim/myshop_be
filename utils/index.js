@@ -1,34 +1,72 @@
 const axios = require('axios');
-const Cart = require('../models/Cart');
-const Product = require('../models/Product');
-const product_options = require('../models/product_options');
-const ProductImage = require('../models/ProductImage');
+
+const { Cart, product_options, Product, ProductImage } = require('../models');
+
+const { Op } = require('sequelize'); // Sequelize import 시 Op도 함께 가져와야 합니다.
 
 const getCartItems = async (user_id) => {
-  const result = await Cart.findAll({
-    where: { user_id },
+  let cartItems = [];
+
+  // 1. product_option_id가 있는 장바구니 아이템 조회 (옵션 상품)
+  const optionItems = await Cart.findAll({
+    where: {
+      user_id,
+      product_option_id: { [Op.ne]: null }, // product_option_id가 null이 아닌 경우
+    },
     include: [
       {
-        model: product_options,
-        attributes: ['id', 'size', 'color', 'price'],
+        model: product_options, // Cart -> product_options 조인
+        attributes: ['id', 'size', 'color', 'price', 'stock'], // 재고(stock)도 추가하여 가져오는 것이 좋습니다.
         include: {
-          model: Product,
-          attributes: ['id', 'name', 'originPrice'],
+          model: Product, // product_options -> Product 조인
+          attributes: ['id', 'name', 'originPrice', 'discountPrice'], // 상품 정보
           include: [
             {
-              model: product_options, //  현재 옵션의 상품과 관련된 모든 옵션 조회
-              attributes: ['id', 'size', 'color', 'price', 'stock'],
+              model: ProductImage, // Product -> ProductImage 조인 (메인 이미지 등)
+              attributes: ['id', 'imageUrl', 'type'],
+              where: { type: 'main' }, // 예시: 메인 이미지만 필요하다면 조건 추가
+              required: false, // 이미지가 없을 수도 있으므로 LEFT JOIN
             },
             {
-              model: ProductImage, //  상품 이미지 조회 추가
-              attributes: ['id', 'imageUrl', 'type'],
+              model: product_options, // 해당 상품에 연결된 모든 옵션 정보 (다른 옵션들을 보여줄 때 유용)
+              attributes: ['id', 'size', 'color', 'price', 'stock'],
+              required: false, // 옵션이 없을 수도 있으므로 LEFT JOIN
             },
           ],
         },
       },
     ],
   });
-  return result;
+
+  // 2. product_option_id가 없는 장바구니 아이템 조회 (단일 상품)
+  const simpleItems = await Cart.findAll({
+    where: {
+      user_id,
+      product_option_id: null, // product_option_id가 null인 경우
+    },
+    include: [
+      {
+        model: Product, // Cart -> Product 직접 조인
+        attributes: ['id', 'name', 'originPrice', 'discountPrice'], // 상품 정보
+        include: [
+          {
+            model: ProductImage, // Product -> ProductImage 조인
+            attributes: ['id', 'imageUrl', 'type'],
+            where: { type: 'main' }, // 예시: 메인 이미지만 필요하다면 조건 추가
+            required: false, // 이미지가 없을 수도 있으므로 LEFT JOIN
+          },
+        ],
+      },
+    ],
+  });
+
+  // 두 결과를 합치고 필요에 따라 정렬 또는 추가 처리
+  cartItems = [...optionItems, ...simpleItems];
+
+  // 예를 들어, 카트 ID 또는 추가 날짜 기준으로 정렬할 수 있습니다.
+  cartItems.sort((a, b) => a.createdAt - b.createdAt); // 오래된 카트 아이템부터 정렬
+
+  return cartItems;
 };
 
 const updateCartOwner = async (non_user_id, user_id) => {

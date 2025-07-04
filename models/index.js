@@ -41,6 +41,9 @@ Cart.belongsTo(User, {
 Cart.belongsTo(product_options, {
   foreignKey: 'product_option_id',
 });
+Cart.belongsTo(Product, {
+  foreignKey: 'product_id',
+});
 
 Product.hasMany(ProductImage, {
   foreignKey: 'product_id',

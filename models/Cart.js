@@ -20,11 +20,19 @@ const Cart = sequelize.define(
       },
     },
     product_option_id: {
-      // ✅ product_options 참조
+      // product_options 참조
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'product_options',
+        key: 'id',
+      },
+    },
+    product_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'ProductOptions',
+        model: 'Product',
         key: 'id',
       },
     },

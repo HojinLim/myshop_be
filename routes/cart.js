@@ -33,24 +33,26 @@ router.get('/', async (req, res) => {
 // 카트 추가 가져오기
 router.post('/add', async (req, res) => {
   try {
-    const { user_id, product_option_id, quantity } = req.body;
+    const { user_id, product_option_id, product_id, quantity } = req.body;
 
     // 입력값 확인
-    if (!quantity || !product_option_id) {
-      return res.status(400).json({ message: '모든 필드를 입력하세요.' });
+    if (!quantity) {
+      return res.status(400).json({ message: '수량 필드를 입력하세요.' });
     }
 
-    // 존재하는 옵션인지 검증
-    const exist_option = await product_options.findOne({
-      where: {
-        id: Number(product_option_id),
-      },
-    });
+    if (product_option_id) {
+      // 존재하는 옵션인지 검증
+      const exist_option = await product_options.findOne({
+        where: {
+          id: Number(product_option_id),
+        },
+      });
 
-    if (!exist_option) {
-      return res
-        .status(400)
-        .json({ message: '존재하지 않는 옵션입니다.', exist_option });
+      if (!exist_option) {
+        return res
+          .status(400)
+          .json({ message: '존재하지 않는 옵션입니다.', exist_option });
+      }
     }
     const exist_cart = await Cart.findOne({
       where: {
@@ -63,7 +65,13 @@ router.post('/add', async (req, res) => {
       //  카트 업데이트 진행
       const cart = await Cart.update(
         { quantity: exist_cart.quantity + quantity },
-        { where: { user_id, product_option_id: product_option_id } }
+        {
+          where: {
+            user_id,
+            product_id,
+            product_option_id: product_option_id || null,
+          },
+        }
       );
       return res.status(200).json({
         message: '카트 추가 성공',
@@ -154,7 +162,13 @@ router.post('/update_quantity', async (req, res) => {
 
 // 카트 옵션 업데이트
 router.post('/update_option', async (req, res) => {
-  const { user_id, product_option_id, cart_id, quantity = 1 } = req.body;
+  const {
+    user_id,
+    product_option_id,
+    product_id,
+    cart_id,
+    quantity = 1,
+  } = req.body;
   // 최소 양 : 1로 지정
 
   try {
@@ -186,6 +200,7 @@ router.post('/update_option', async (req, res) => {
         user_id,
         product_option_id: product_option_id,
         quantity,
+        product_id,
       });
       if (cart_id) {
         await Cart.destroy({ where: { id: cart_id } });
