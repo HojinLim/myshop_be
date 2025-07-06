@@ -19,7 +19,7 @@ const getCartItems = async (user_id) => {
         attributes: ['id', 'size', 'color', 'price', 'stock'], // 재고(stock)도 추가하여 가져오는 것이 좋습니다.
         include: {
           model: Product, // product_options -> Product 조인
-          attributes: ['id', 'name', 'originPrice', 'discountPrice'], // 상품 정보
+          attributes: ['id', 'name', 'originPrice', 'discountPrice', 'stock'], // 상품 정보
           include: [
             {
               model: ProductImage, // Product -> ProductImage 조인 (메인 이미지 등)
@@ -47,7 +47,7 @@ const getCartItems = async (user_id) => {
     include: [
       {
         model: Product, // Cart -> Product 직접 조인
-        attributes: ['id', 'name', 'originPrice', 'discountPrice'], // 상품 정보
+        attributes: ['id', 'name', 'originPrice', 'discountPrice', 'stock'], // 상품 정보
         include: [
           {
             model: ProductImage, // Product -> ProductImage 조인

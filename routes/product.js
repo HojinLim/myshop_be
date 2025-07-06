@@ -11,6 +11,7 @@ const s3 = require('../config/s3');
 
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const createS3Uploader = require('../config/createS3Uploader');
+const { where, Op } = require('sequelize');
 
 // 상품 리스트 가져오기
 router.get('/', async (req, res) => {
@@ -148,37 +149,56 @@ router.post('/delete_product', async (req, res) => {
 // 상품 옵션 추가하기
 router.post('/create_options', async (req, res) => {
   try {
-    const { product_id, size, color, stock } = req.body;
+    const { product_id, size, color, stock, price } = req.body;
 
     // 입력값 확인
-    if (!size || !color || !stock) {
-      return res.status(400).json({ message: '모든 필드를 입력하세요.' });
+    // 상품 옵션 추가 (옵션 o)
+    if (!stock || !price) {
+      return res
+        .status(400)
+        .json({ message: '가격, 재고 필드를 확인해주세요.' });
     }
 
     // 중복된 옵션인지 검증
-    const exist_option = await product_options.findOne({
-      where: {
-        product_id: Number(product_id),
-        size,
-        color,
-      },
-    });
+    if (size && color) {
+      const exist_option = await product_options.findOne({
+        where: {
+          product_id: Number(product_id),
+          size,
+          color,
+        },
+      });
 
-    if (exist_option !== null) {
-      return res
-        .status(400)
-        .json({ message: '이미 존재하는 옵션입니다.', exist_option });
+      if (exist_option !== null) {
+        return res
+          .status(400)
+          .json({ message: '이미 존재하는 옵션입니다.', exist_option });
+      }
+      const product_option = await product_options.create({
+        ...req.body,
+      });
+
+      return res.status(200).json({
+        message: '옵션 생성 성공',
+        product_option: {
+          ...product_option,
+        },
+      });
     }
-    const product_option = await product_options.create({
-      ...req.body,
-    });
-
-    return res.status(200).json({
-      message: '옵션 생성 성공',
-      product_option: {
-        ...product_option,
-      },
-    });
+    // 상품 재고 업데이트 (옵션 x)
+    else {
+      // size, color 값이 없고 재고만 업데이트
+      const updated_product = await Product.update(
+        { stock: stock },
+        { where: { id: product_id } }
+      );
+      return res.status(200).json({
+        message: '재고 업데이트 성공',
+        updated_product: {
+          ...updated_product,
+        },
+      });
+    }
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: '옵션 생성 실패', error });
@@ -212,8 +232,20 @@ router.get('/product_options', async (req, res) => {
         },
       ],
     });
+    const productWithStock = await Product.findOne({
+      where: {
+        id: product_id,
+        stock: { [Op.gt]: 0 }, // stock > 0
+      },
+      include: [
+        {
+          model: ProductImage, //  ProductImage 모델 포함
+          attributes: ['imageUrl'],
+        },
+      ],
+    });
 
-    if (options === null) {
+    if (!productWithStock && options.length <= 0) {
       return res
         .status(400)
         .json({ message: '해당 아이디의 옵션이 존재하지 않습니다.' });
@@ -222,6 +254,7 @@ router.get('/product_options', async (req, res) => {
     return res.status(200).json({
       message: '옵션 조회 성공',
       product_option: options,
+      productWithStock: productWithStock || null,
     });
   } catch (error) {
     console.error(error);

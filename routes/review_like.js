@@ -43,7 +43,7 @@ router.delete('/delete', async (req, res) => {
       },
     });
 
-    res.status(200).json({ message: '리뷰 삭제 성공', result });
+    res.status(200).json({ message: '리뷰 좋아요 삭제 성공', result });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

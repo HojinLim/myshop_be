@@ -152,8 +152,8 @@ router.post('/without_money', async (req, res) => {
       await order_item.create({
         order_id: newOrder.id,
         user_id: userId,
-        product_id: item.Product.id,
-        option_id: item.id,
+        product_id: item.product_id,
+        option_id: item?.id || null,
         price: item.price,
         quantity: item.quantity,
         status: 'pending',

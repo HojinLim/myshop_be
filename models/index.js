@@ -29,6 +29,10 @@ order_item.belongsTo(product_options, {
   foreignKey: 'option_id',
   onDelete: 'CASCADE',
 });
+order_item.belongsTo(Product, {
+  foreignKey: 'product_id',
+  onDelete: 'CASCADE',
+});
 
 point_history.belongsTo(User, { foreignKey: 'user_id' });
 point_history.belongsTo(order, { foreignKey: 'order_id' });

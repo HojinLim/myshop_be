@@ -29,9 +29,10 @@ router.post('/', async (req, res) => {
         {
           model: order_item,
           include: [
+            { model: Product, include: [{ model: ProductImage }] },
             {
               model: product_options,
-              include: [{ model: Product, include: [{ model: ProductImage }] }],
+              required: false, // 옵션이 없어도 가져오게 함
             },
           ],
         },

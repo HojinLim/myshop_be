@@ -132,14 +132,24 @@ router.post('/transfer', async (req, res) => {
 
 // 카트 수량 업데이트
 router.post('/update_quantity', async (req, res) => {
-  const { user_id, product_option_id, quantity } = req.body;
+  const { user_id, product_id, product_option_id, quantity } = req.body;
   try {
-    const canBuy = await product_options.findOne({
-      where: {
-        id: product_option_id, //  특정 옵션 기준
-        stock: { [Op.gte]: quantity }, //  stock >= quantity 체크
-      },
-    });
+    let canBuy;
+    if (product_option_id) {
+      canBuy = await product_options.findOne({
+        where: {
+          id: product_option_id, //  특정 옵션 기준
+          stock: { [Op.gte]: quantity }, //  stock >= quantity 체크
+        },
+      });
+    } else if (!product_option_id && product_id) {
+      canBuy = await Product.findOne({
+        where: {
+          id: product_id, //  특정 제품 기준
+          stock: { [Op.gte]: quantity }, //  stock >= quantity 체크
+        },
+      });
+    }
 
     if (!canBuy) {
       console.log('구매 불가: 재고 부족');
@@ -149,7 +159,14 @@ router.post('/update_quantity', async (req, res) => {
     //  카트 업데이트 진행
     await Cart.update(
       { quantity },
-      { where: { user_id, product_option_id: product_option_id } }
+      {
+        where: product_option_id
+          ? { user_id, product_option_id }
+          : {
+              user_id,
+              product_id,
+            },
+      }
     );
 
     console.log('카트 업데이트 완료');
