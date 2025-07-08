@@ -158,6 +158,19 @@ router.post('/create_options', async (req, res) => {
         .status(400)
         .json({ message: '가격, 재고 필드를 확인해주세요.' });
     }
+    // 옵션이 없는 제품 존재
+    const no_option = await Product.findOne({
+      where: {
+        id: Number(product_id),
+        stock: { [Op.gt]: 0 },
+      },
+    });
+
+    if (no_option) {
+      return res
+        .status(400)
+        .json({ message: '옵션 없는 상품을 먼저 제거 해주세요.' });
+    }
 
     // 중복된 옵션인지 검증
     if (size && color) {
@@ -187,6 +200,18 @@ router.post('/create_options', async (req, res) => {
     }
     // 상품 재고 업데이트 (옵션 x)
     else {
+      const exist_option = await product_options.findOne({
+        where: {
+          product_id: Number(product_id),
+        },
+      });
+
+      if (exist_option) {
+        return res
+          .status(400)
+          .json({ message: '존재하는 옵션을 먼저 삭제해주세요', exist_option });
+      }
+
       // size, color 값이 없고 재고만 업데이트
       const updated_product = await Product.update(
         { stock: stock },
@@ -245,12 +270,6 @@ router.get('/product_options', async (req, res) => {
       ],
     });
 
-    if (!productWithStock && options.length <= 0) {
-      return res
-        .status(400)
-        .json({ message: '해당 아이디의 옵션이 존재하지 않습니다.' });
-    }
-
     return res.status(200).json({
       message: '옵션 조회 성공',
       product_option: options,
@@ -264,14 +283,12 @@ router.get('/product_options', async (req, res) => {
 // 상품 옵션 업데이트
 router.post('/update_options', async (req, res) => {
   try {
-    const { id, size, color, stock, price } = req.body;
+    const { id, size, color, stock, price, product_id } = req.body;
 
     // 입력값 확인
-    if (!size || !color || !stock || !price) {
+    if (!stock || !price) {
       return res.status(400).json({ message: '모든 필드를 입력하세요.' });
     }
-
-    console.log('req.body', req.body);
 
     // 중복된 옵션인지 검증
     const exist_option = await product_options.findOne({
@@ -368,6 +385,21 @@ router.post('/delete_product_options', async (req, res) => {
 
   if (!product_id) {
     return res.status(400).json({ message: '상품 ID를 입력하세요.' });
+  }
+  // 옵션이 없는 제품 존재 삭제 시 수량 0으로 업데이트
+  const no_option = await Product.findOne({
+    where: {
+      id: Number(product_id),
+      stock: { [Op.gt]: 0 },
+    },
+  });
+
+  if (no_option) {
+    no_option.update({ stock: 0 }, { where: { id: product_id } });
+
+    return res
+      .status(200)
+      .json({ message: '상품 옵션 삭제(수량 초기화) 완료' });
   }
 
   try {
