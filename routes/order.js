@@ -80,28 +80,28 @@ router.get('/sales', async (req, res) => {
       },
       include: [
         {
-          model: product_options,
+          model: Product,
           include: [
             {
-              model: Product,
+              model: product_options,
             },
           ],
         },
       ],
       attributes: [
         [fn('DATE_FORMAT', col('order_item.createdAt'), '%Y-%m'), 'month'],
-        [col('product_option->Product.category'), 'category'],
+        [col('Product.category'), 'category'],
         [
-          fn('SUM', literal('order_item.quantity * order_item.price')),
+          fn('SUM', literal('DISTINCT order_item.quantity * order_item.price')),
           'totalSales',
         ],
       ],
       group: [
         fn('DATE_FORMAT', col('order_item.createdAt'), '%Y-%m'),
-        col('product_option->Product.category'),
+        col('Product.category'),
       ],
       order: [[fn('DATE_FORMAT', col('order_item.createdAt'), '%Y-%m'), 'ASC']],
-      raw: false,
+      raw: true,
     });
 
     return res.status(200).json({

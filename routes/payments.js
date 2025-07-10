@@ -102,7 +102,7 @@ router.post('/verify', async (req, res) => {
         await order_item.create({
           order_id: newOrder.id,
           user_id: userId,
-          product_id: item.Product.id,
+          product_id: item.product_id,
           option_id: item.id,
           price: item.price,
           quantity: item.quantity,
