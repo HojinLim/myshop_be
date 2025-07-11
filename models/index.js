@@ -16,15 +16,9 @@ const review_like = require('./review_like');
 
 // 관계 설정
 order.hasMany(order_item, { foreignKey: 'order_id', onDelete: 'CASCADE' });
-// order.belongsTo(Product, {
-//   foreignKey: 'product_id',
-//   onDelete: 'CASCADE',
-// });
+
 order_item.belongsTo(order, { foreignKey: 'order_id', onDelete: 'CASCADE' });
-// order_item.belongsTo(Product, {
-//   foreignKey: 'product_id',
-//   onDelete: 'CASCADE',
-// });
+
 order_item.belongsTo(product_options, {
   foreignKey: 'option_id',
   onDelete: 'CASCADE',

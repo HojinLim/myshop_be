@@ -22,6 +22,14 @@ const Category = sequelize.define(
       allowNull: true,
       unique: true,
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
   },
   {
     freezeTableName: true, // 테이블 이름을 모델명 그대로 사용

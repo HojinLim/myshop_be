@@ -46,9 +46,11 @@ const order = sequelize.define(
     },
     createdAt: {
       type: DataTypes.DATE,
+      allowNull: false,
     },
     updatedAt: {
       type: DataTypes.DATE,
+      allowNull: false,
     },
   },
   {

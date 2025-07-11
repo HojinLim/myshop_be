@@ -5,9 +5,6 @@ const User = require('../models/User');
 const authenticateToken = require('../middlewares/authenticateToken');
 const s3 = require('../config/s3');
 
-const multer = require('multer');
-const multerS3 = require('multer-s3');
-
 const router = express.Router();
 
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
@@ -15,34 +12,7 @@ const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 // 비밀 키 설정
 const SECRET_KEY = process.env.SECRET_KEY;
 
-// Multer + S3 설정
-// const upload = multer({
-//   storage: multerS3({
-//     s3: s3,
-//     bucket: process.env.S3_BUCKET_NAME,
-//     metadata: (req, file, cb) => {
-//       cb(null, { fieldName: file.fieldname });
-//     },
-//     key: (req, file, cb) => {
-//       console.log('req.body:', req.body.userId); // form data 확인
-//       console.log('req.file:', req.body.file); // 업로드된 파일 정보 확인
-
-//       const userId = req.query.userId;
-//       const timestamp = Date.now();
-//       const originalName = file.originalname.replace(/\s+/g, '_');
-//       // const filePath = `profile/${userId}/${timestamp}_${originalName}`;
-//       const splited = originalName.split('.');
-//       const type = splited[splited.length - 1];
-//       const filePath = `profile/${userId}.${type}`;
-//       cb(null, filePath); // S3에 저장할 경로
-//     },
-//   }),
-// });
-
 const createS3Uploader = require('../config/createS3Uploader');
-
-// const s3 = require('../config/s3');
-// const review_like = require('../models/review_like');
 
 const upload = createS3Uploader().single('profile');
 
