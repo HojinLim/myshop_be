@@ -226,11 +226,11 @@ router.get('/', async (req, res) => {
       include: [
         {
           model: review_image,
-          attributes: ['imageUrl'],
+          attributes: ['id', 'imageUrl', 'review_id'],
         },
         {
           model: User,
-          attributes: ['username'],
+          attributes: ['username', 'profileUrl'],
         },
         {
           model: product_options,
