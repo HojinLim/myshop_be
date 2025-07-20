@@ -16,7 +16,7 @@ const { where, Op } = require('sequelize');
 // 상품 리스트 가져오기
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 6, id, category } = req.query;
+    const { id, category, page = 1, limit = 6 } = req.query;
 
     const offset = (page - 1) * limit;
 
